@@ -7,6 +7,7 @@ set -e
 
 BIN_DIR="$HOME/.local/bin"
 BINDINGS_FILE="$HOME/.config/hypr/bindings.conf"
+HOOK_FILE="/etc/pacman.d/hooks/omarchy-window-restore-remove.hook"
 
 echo "Deactivating Omarchy Window Restore..."
 
@@ -43,6 +44,12 @@ with open(path, "w") as f:
 EOF
   echo "  ✓ Keybindings removed from $BINDINGS_FILE"
   echo "  ℹ  SUPER+W is restored to default (killactive) behavior"
+fi
+
+# Remove pacman hook
+if [ -f "$HOOK_FILE" ]; then
+  sudo rm -f "$HOOK_FILE"
+  echo "  ✓ Pacman hook removed"
 fi
 
 # Clean up cache files

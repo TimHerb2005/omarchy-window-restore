@@ -9,7 +9,10 @@ SRC="/usr/share/omarchy-window-restore-git/bin"
 BIN_DIR="$HOME/.local/bin"
 BINDINGS_FILE="$HOME/.config/hypr/bindings.conf"
 CONFIG_FILE="$HOME/.cache/hypr-restore-config.json"
+HOOK_DIR="/etc/pacman.d/hooks"
+HOOK_FILE="$HOOK_DIR/omarchy-window-restore-remove.hook"
 MARKER="# Window Restore"
+CURRENT_USER="$USER"
 
 echo "Activating Omarchy Window Restore..."
 
@@ -40,8 +43,25 @@ fi
 # Create default config (idempotent)
 if [ ! -f "$CONFIG_FILE" ]; then
   mkdir -p "$(dirname "$CONFIG_FILE")"
-  printf '{"max_windows": 5, "excluded_classes": ["org.omarchy.btop"]}\n' > "$CONFIG_FILE"
+  printf '{"max_windows": 5, "excluded_classes": ["org.omarchy.btop"], "pause_on_close": true, "notifications_enabled": true}\n' > "$CONFIG_FILE"
   echo "  ✓ Default config created (btop excluded by default)"
+fi
+
+# Install pacman hook so removal auto-cleans user config (idempotent)
+if [ ! -f "$HOOK_FILE" ]; then
+  sudo mkdir -p "$HOOK_DIR"
+  sudo tee "$HOOK_FILE" > /dev/null << HOOK
+[Trigger]
+Operation = Remove
+Type = Package
+Target = omarchy-window-restore-git
+
+[Action]
+Description = Cleaning up Omarchy Window Restore user config...
+When = PreTransaction
+Exec = /bin/sh -c 'for h in /home/*/; do u=\$(basename "\$h"); if [ -f "\$h/.local/bin/hypr-close-window" ]; then runuser -l "\$u" -c "omarchy-uninstall-window-restore" 2>/dev/null || true; fi; done'
+HOOK
+  echo "  ✓ Pacman hook installed (auto-cleanup on removal)"
 fi
 
 echo ""
@@ -51,4 +71,4 @@ echo "  SUPER+W           → Close window (saved to history)"
 echo "  SUPER+R           → Restore last closed window"
 echo "  SUPER+SHIFT+R     → Restore all closed windows"
 echo "  SUPER+ALT+R       → Pick window to restore (menu)"
-echo "  SUPER+CTRL+R      → Settings (mode, max windows, exclusions)"
+echo "  SUPER+CTRL+R      → Settings (mode, max windows, exclusions, pause, notifications)"
