@@ -59,6 +59,23 @@ def mode_relaunch(window_class, pid, max_windows):
     subprocess.run(["hyprctl", "dispatch", "killactive"])
 
 
+def pause_media(window_class):
+    """Pause the media player associated with this window (or the active one as fallback)."""
+    try:
+        players_r = subprocess.run(["playerctl", "-l"], capture_output=True, text=True)
+        players = [p for p in players_r.stdout.strip().split("\n") if p]
+        # Try player whose name starts with the window class (e.g. "chromium.instance1")
+        matched = [p for p in players if p.lower().startswith(window_class.lower())]
+        if matched:
+            subprocess.run(["playerctl", "-p", matched[0], "pause"],
+                           capture_output=True)
+        elif players:
+            # Fallback: pause whichever player is currently active
+            subprocess.run(["playerctl", "pause"], capture_output=True)
+    except Exception:
+        pass
+
+
 def mode_hide(address, window_class, max_windows):
     hidden = load_json(HIDDEN_FILE)
     if len(hidden) >= max_windows:
@@ -66,6 +83,8 @@ def mode_hide(address, window_class, max_windows):
         subprocess.run(["hyprctl", "dispatch", "closewindow", f"address:{oldest['address']}"])
     hidden.insert(0, {"address": address, "class": window_class})
     save_json(HIDDEN_FILE, hidden)
+    # Pause any media playing in this window before hiding
+    pause_media(window_class)
     # Move silently to high workspace — process keeps running, UI disappears
     subprocess.run(["hyprctl", "dispatch", "movetoworkspacesilent", str(HIDE_WS)])
 
