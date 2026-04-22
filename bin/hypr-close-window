@@ -60,14 +60,9 @@ def mode_relaunch(window_class, pid, max_windows):
 
 
 def pause_media(window_class):
-    """Pause only the media player associated with this window (matched by class name)."""
+    """Pause all running media players."""
     try:
-        # playerctl matches player by prefix — "chromium" matches "chromium.instance3147"
-        result = subprocess.run(
-            ["playerctl", "-p", window_class, "pause"],
-            capture_output=True, text=True
-        )
-        # If no player found for this class, do nothing (Spotify etc. unaffected)
+        subprocess.run(["playerctl", "--all-players", "pause"], capture_output=True)
     except Exception:
         pass
 
@@ -99,8 +94,9 @@ def main():
     max_windows = config.get("max_windows", 5)
     excluded   = config.get("excluded_classes", [])
 
-    # If class is excluded: always kill directly, never track or hide
+    # If class is excluded: pause media then kill directly, never track or hide
     if window_class in excluded:
+        pause_media(window_class)
         subprocess.run(["hyprctl", "dispatch", "killactive"])
         return
 
