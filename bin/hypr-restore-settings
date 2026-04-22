@@ -222,15 +222,27 @@ def menu_pause(config):
 
 def menu_ws(config):
     ws = config.get("hide_workspace", 99)
-    raw = input_text(f"Hide workspace number (current: {ws})")
+    raw = input_text(f"Hide workspace number (current: {ws}, recommended: >= 50)")
     if not raw: return
     try:
         n = int(raw)
         if n < 1:
             notify("ff5555", "  Invalid: workspace must be >= 1")
             return
+        if n < 10:
+            notify("ff9900", f"  Warning: workspace {n} may conflict with your normal workspaces!")
+            return
+        old_ws = ws
         config["hide_workspace"] = n
         save_config(config)
+        # Migrate any currently hidden windows from old workspace to new one
+        hidden = load_json(HIDDEN_FILE)
+        if hidden and old_ws != n:
+            for entry in hidden:
+                addr = entry.get("address", "")
+                if addr:
+                    subprocess.run(["hyprctl", "dispatch", "movetoworkspacesilent",
+                                    f"{n},address:{addr}"], capture_output=True)
         notify("50fa7b", f"  Hide workspace: {n}")
     except ValueError:
         notify("ff5555", f"  Invalid: '{raw}' is not a number")
