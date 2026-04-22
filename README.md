@@ -99,15 +99,35 @@ For Chromium-based apps, the window **class** is used to identify the correct la
 
 ## Install
 
+### Option 1: Git clone (manual)
+
 ```bash
 git clone https://github.com/TimHerb2005/omarchy-window-restore.git
 cd omarchy-window-restore
 bash install.sh
 ```
 
-The install script:
-- Copies scripts to `~/.local/bin/`
-- Adds keybindings to `~/.config/hypr/bindings.conf`
+### Option 2: AUR package
+
+Install via any AUR helper:
+
+```bash
+yay -S omarchy-window-restore
+```
+
+Then activate for your user:
+
+```bash
+omarchy-install-window-restore
+```
+
+Or via the **Omarchy Menu**: `Install → AUR` → type `omarchy-window-restore`, then run `omarchy-install-window-restore` in a terminal afterwards.
+
+---
+
+Both options:
+- Copy scripts to `~/.local/bin/`
+- Add keybindings to `~/.config/hypr/bindings.conf`
 - Hyprland reloads the config automatically — **no restart needed**
 
 ## Uninstall
