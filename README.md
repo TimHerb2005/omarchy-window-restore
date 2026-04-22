@@ -108,5 +108,5 @@ Removes all scripts, keybindings and the history cache. `SUPER+W` returns to its
 
 ## License
 
-MIT
+[PolyForm Noncommercial License 1.0.0](LICENSE) — free for personal and non-commercial use, commercial use is not permitted.
 
