@@ -60,9 +60,11 @@ def mode_relaunch(window_class, pid, max_windows):
 
 
 def pause_media(window_class):
-    """Pause all running media players."""
+    """Pause the media player associated with this window only."""
     try:
-        subprocess.run(["playerctl", "--all-players", "pause"], capture_output=True)
+        # playerctl matches by prefix: "chromium" pauses "chromium.instance3147"
+        # If no player matches, nothing happens (Spotify stays running)
+        subprocess.run(["playerctl", "-p", window_class, "pause"], capture_output=True)
     except Exception:
         pass
 
