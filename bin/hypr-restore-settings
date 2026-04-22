@@ -196,12 +196,12 @@ def main():
 
     mode_label = "Hide" if mode == "hide" else "Relaunch"
     mode_icon  = "󰈉" if mode == "hide" else "󰑓"
-    excl_label = ", ".join(excl[:3]) + ("…" if len(excl) > 3 else "") if excl else "none"
+    excl_count = len(excl)
 
     menu = [
         f"{mode_icon}  Mode: {mode_label}  →  switch",
         f"  Max windows: {max_w}  →  enter number",
-        f"  Exclusion list: {excl_label}  →  manage",
+        f"  Exclusion list ({excl_count})  →  manage",
     ]
 
     selected = pick(menu, "Window Restore Settings")
