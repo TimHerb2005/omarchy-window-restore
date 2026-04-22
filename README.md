@@ -1,4 +1,4 @@
-# Omarchy Window Restore
+# Omarchy easy Window Restore
 
 > Never lose a closed window again on [Omarchy](https://omarchy.org/).
 
