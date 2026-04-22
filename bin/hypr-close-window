@@ -1,91 +1,97 @@
 #!/usr/bin/env python3
-# hypr-close-window
-# Saves the active window to history, then closes it.
-# Called instead of killactive for SUPER+W.
+# hypr-close-window: SUPER+W handler
+# relaunch mode: saves launch args to history, then kills window
+# hide mode:     moves window to special:windowtrash (process + state preserved)
 
-import json
-import os
-import re
-import shlex
-import subprocess
+import json, os, re, shlex, subprocess
 
 HISTORY_FILE = os.path.expanduser("~/.cache/hypr-window-history.json")
-MAX_HISTORY = 5
+HIDDEN_FILE  = os.path.expanduser("~/.cache/hypr-restore-hidden.json")
+MODE_FILE    = os.path.expanduser("~/.cache/hypr-restore-mode")
+CONFIG_FILE  = os.path.expanduser("~/.cache/hypr-restore-config.json")
 
 
-def get_launch_args(window_class: str, pid: int) -> list[str] | None:
-    """
-    Determine the correct launch args for this window.
-    For Chromium-based apps all windows share one PID, so we use the
-    window class to reconstruct the right command instead of reading cmdline.
-    """
-    # PWA launched via --app= : class is like "chrome-teams.cloud.microsoft__-Default"
-    pwa_match = re.match(r"^chrome-([^_]+)__.*-Default$", window_class)
-    if pwa_match:
-        # Reconstruct URL from class: dots are dots, __ separates host from path
-        host_part = pwa_match.group(1)  # e.g. "teams.cloud.microsoft"
-        url = f"https://{host_part}/"
-        # Use omarchy-launch-webapp to respect default browser setting
-        return ["omarchy-launch-webapp", url]
+def get_mode():
+    try:
+        with open(MODE_FILE) as f: return f.read().strip()
+    except: return "relaunch"
 
-    # Regular Chromium/Chrome window
+
+def get_config():
+    try:
+        with open(CONFIG_FILE) as f: return json.load(f)
+    except: return {"max_windows": 5, "excluded_classes": []}
+
+
+def load_json(path):
+    try:
+        with open(path) as f: return json.load(f)
+    except: return []
+
+
+def save_json(path, data):
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, "w") as f: json.dump(data, f)
+
+
+def get_launch_args(window_class, pid):
+    pwa = re.match(r"^chrome-([^_]+)__.*-Default$", window_class)
+    if pwa:
+        return ["omarchy-launch-webapp", f"https://{pwa.group(1)}/"]
     if window_class in ("chromium", "google-chrome", "brave-browser", "microsoft-edge"):
         return ["omarchy-launch-browser"]
-
-    # For all other apps: read cmdline from /proc
     try:
-        with open(f"/proc/{pid}/cmdline", "rb") as f:
-            raw = f.read()
+        with open(f"/proc/{pid}/cmdline", "rb") as f: raw = f.read()
         parts = [p.decode("utf-8", errors="replace") for p in raw.split(b"\x00") if p]
-        if not parts:
-            return None
-        # Some apps pack everything into one space-separated string
-        if len(parts) == 1 and " " in parts[0]:
-            parts = shlex.split(parts[0])
-        # Skip child processes (renderer, gpu, etc.)
-        if "--type=" in " ".join(parts):
-            return None
-        return parts
-    except Exception:
-        return None
+        if len(parts) == 1 and " " in parts[0]: parts = shlex.split(parts[0])
+        if "--type=" in " ".join(parts): return None
+        return parts or None
+    except: return None
 
 
-def load_history() -> list[dict]:
-    try:
-        with open(HISTORY_FILE) as f:
-            return json.load(f)
-    except Exception:
-        return []
-
-
-def save_to_history(window_class: str, args: list[str]) -> None:
-    history = load_history()
-    history.insert(0, {"class": window_class, "args": args})
-    history = history[:MAX_HISTORY]
-    os.makedirs(os.path.dirname(HISTORY_FILE), exist_ok=True)
-    with open(HISTORY_FILE, "w") as f:
-        json.dump(history, f)
-
-
-def main() -> None:
-    # Get active window
-    result = subprocess.run(
-        ["hyprctl", "activewindow", "-j"],
-        capture_output=True, text=True, timeout=2
-    )
-    window = json.loads(result.stdout)
-    pid = window.get("pid", 0)
-    window_class = window.get("class", "")
-
-    if window_class and pid > 0:
-        args = get_launch_args(window_class, pid)
-        if args:
-            save_to_history(window_class, args)
-
-    # Close the window
+def mode_relaunch(window_class, pid, max_windows):
+    args = get_launch_args(window_class, pid)
+    if args:
+        h = load_json(HISTORY_FILE)
+        h.insert(0, {"class": window_class, "args": args})
+        save_json(HISTORY_FILE, h[:max_windows])
     subprocess.run(["hyprctl", "dispatch", "killactive"])
+
+
+def mode_hide(address, window_class, max_windows):
+    hidden = load_json(HIDDEN_FILE)
+    if len(hidden) >= max_windows:
+        oldest = hidden.pop()
+        subprocess.run(["hyprctl", "dispatch", "closewindow", f"address:{oldest['address']}"])
+    hidden.insert(0, {"address": address, "class": window_class})
+    save_json(HIDDEN_FILE, hidden)
+    subprocess.run(["hyprctl", "dispatch", "movetoworkspace", "special:windowtrash"])
+
+
+def main():
+    r = subprocess.run(["hyprctl", "activewindow", "-j"], capture_output=True, text=True, timeout=2)
+    w = json.loads(r.stdout)
+    pid, window_class, address = w.get("pid", 0), w.get("class", ""), w.get("address", "")
+
+    config     = get_config()
+    max_windows = config.get("max_windows", 5)
+    excluded   = config.get("excluded_classes", [])
+
+    # If class is excluded: just kill/hide without saving to history
+    if window_class in excluded:
+        if get_mode() == "hide":
+            subprocess.run(["hyprctl", "dispatch", "movetoworkspace", "special:windowtrash"])
+        else:
+            subprocess.run(["hyprctl", "dispatch", "killactive"])
+        return
+
+    if get_mode() == "hide":
+        if window_class and address:
+            mode_hide(address, window_class, max_windows)
+    else:
+        if window_class and pid > 0:
+            mode_relaunch(window_class, pid, max_windows)
 
 
 if __name__ == "__main__":
     main()
-

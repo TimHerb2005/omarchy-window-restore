@@ -1,50 +1,79 @@
 #!/usr/bin/env python3
-# hypr-restore-window
-# Re-launches the most recently closed window from history.
+# hypr-restore-window: SUPER+R handler
+# relaunch mode: pops from history and relaunches app
+# hide mode:     moves most recently hidden window back to current workspace
 
-import json
-import os
-import subprocess
-import sys
+import json, os, subprocess
 
 HISTORY_FILE = os.path.expanduser("~/.cache/hypr-window-history.json")
+HIDDEN_FILE  = os.path.expanduser("~/.cache/hypr-restore-hidden.json")
+MODE_FILE    = os.path.expanduser("~/.cache/hypr-restore-mode")
 
-def notify(color: str, msg: str) -> None:
+
+def notify(color, msg):
     subprocess.run(["hyprctl", "notify", "0", "3000", f"rgb({color})", msg])
 
-def main() -> None:
-    if not os.path.exists(HISTORY_FILE):
-        notify("ff9900", " No windows to restore")
-        return
 
+def get_mode():
     try:
-        with open(HISTORY_FILE) as f:
-            history = json.load(f)
-    except Exception:
-        notify("ff5555", " Restore error: bad history file")
-        return
+        with open(MODE_FILE) as f: return f.read().strip()
+    except: return "relaunch"
 
-    if not history:
-        notify("ff9900", " No windows to restore")
-        return
 
-    entry = history.pop(0)
-    with open(HISTORY_FILE, "w") as f:
-        json.dump(history, f)
+def load_json(path):
+    try:
+        with open(path) as f: return json.load(f)
+    except: return []
 
-    args = entry.get("args", [])
-    window_class = entry.get("class", "app")
 
-    if not args:
-        notify("ff5555", " Restore error: no command stored")
-        return
+def save_json(path, data):
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, "w") as f: json.dump(data, f)
 
-    # Launch: omarchy-* commands run standalone, others via uwsm-app
+
+def launch(args):
     if args[0].startswith("omarchy-"):
         subprocess.Popen(args)
     else:
         subprocess.Popen(["uwsm-app", "--"] + args)
-    notify("50fa7b", f" Restored: {window_class}")
+
+
+def restore_relaunch():
+    history = load_json(HISTORY_FILE)
+    if not history:
+        notify("ff9900", " Keine Fenster in der History")
+        return
+    entry = history.pop(0)
+    save_json(HISTORY_FILE, history)
+    args = entry.get("args", [])
+    if not args:
+        notify("ff5555", " Restore Fehler: kein Befehl gespeichert")
+        return
+    launch(args)
+    notify("50fa7b", f" Restored: {entry.get('class', 'app')}")
+
+
+def restore_hide():
+    hidden = load_json(HIDDEN_FILE)
+    if not hidden:
+        notify("ff9900", " Keine versteckten Fenster")
+        return
+    entry = hidden.pop(0)
+    save_json(HIDDEN_FILE, hidden)
+    addr = entry.get("address", "")
+    if not addr:
+        notify("ff5555", " Restore Fehler: Adresse fehlt")
+        return
+    subprocess.run(["hyprctl", "dispatch", "movetoworkspace", f"e+0,address:{addr}"])
+    notify("50fa7b", f" Restored: {entry.get('class', 'app')}")
+
+
+def main():
+    if get_mode() == "hide":
+        restore_hide()
+    else:
+        restore_relaunch()
+
 
 if __name__ == "__main__":
     main()

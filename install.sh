@@ -15,7 +15,7 @@ echo "Installing Omarchy Window Restore..."
 
 # Install scripts
 mkdir -p "$BIN_DIR"
-for script in hypr-close-window hypr-restore-window hypr-restore-all hypr-restore-picker; do
+for script in hypr-close-window hypr-restore-window hypr-restore-all hypr-restore-picker hypr-restore-settings hypr-restore-toggle-mode; do
   install -m 755 "$REPO_DIR/bin/$script" "$BIN_DIR/$script"
 done
 
@@ -27,12 +27,13 @@ if grep -q "$MARKER" "$BINDINGS_FILE" 2>/dev/null; then
 else
   cat >> "$BINDINGS_FILE" << 'BINDINGS'
 
-# Window Restore: SUPER+W speichert in History und schließt, SUPER+R öffnet letztes wieder (max. 5)
+# Window Restore: SUPER+W speichert in History und schließt, SUPER+R öffnet letztes wieder
 unbind = SUPER, W
 bindd = SUPER, W, Close window (restorable via SUPER+R), exec, python3 ~/.local/bin/hypr-close-window
 bindd = SUPER, R, Restore last closed window, exec, python3 ~/.local/bin/hypr-restore-window
 bindd = SUPER SHIFT, R, Restore all closed windows, exec, python3 ~/.local/bin/hypr-restore-all
 bindd = SUPER ALT, R, Pick window to restore (menu), exec, python3 ~/.local/bin/hypr-restore-picker
+bindd = SUPER RALT, R, Window Restore settings, exec, python3 ~/.local/bin/hypr-restore-settings
 BINDINGS
   echo "  ✓ Keybindings added to $BINDINGS_FILE"
 fi
@@ -44,3 +45,4 @@ echo "  SUPER+W           → Close window (saved to history)"
 echo "  SUPER+R           → Restore last closed window"
 echo "  SUPER+SHIFT+R     → Restore all closed windows"
 echo "  SUPER+ALT+R       → Pick window to restore (menu)"
+echo "  SUPER+ALTGR+R     → Settings (mode, max windows, exclusions)"

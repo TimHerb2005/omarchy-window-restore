@@ -1,48 +1,60 @@
 #!/usr/bin/env python3
-# hypr-restore-all
-# Restores ALL windows in history (up to 5) at once.
+# hypr-restore-all: SUPER+SHIFT+R – restore all windows at once
 
-import json
-import os
-import subprocess
+import json, os, subprocess
 
 HISTORY_FILE = os.path.expanduser("~/.cache/hypr-window-history.json")
+HIDDEN_FILE  = os.path.expanduser("~/.cache/hypr-restore-hidden.json")
+MODE_FILE    = os.path.expanduser("~/.cache/hypr-restore-mode")
 
 
-def notify(color: str, msg: str) -> None:
+def notify(color, msg):
     subprocess.run(["hyprctl", "notify", "0", "3000", f"rgb({color})", msg])
 
-
-def main() -> None:
-    if not os.path.exists(HISTORY_FILE):
-        notify("ff9900", " No windows to restore")
-        return
-
+def get_mode():
     try:
-        with open(HISTORY_FILE) as f:
-            history = json.load(f)
-    except Exception:
-        notify("ff5555", " Restore error: bad history file")
-        return
+        with open(MODE_FILE) as f: return f.read().strip()
+    except: return "relaunch"
 
-    if not history:
-        notify("ff9900", " No windows to restore")
-        return
+def load_json(path):
+    try:
+        with open(path) as f: return json.load(f)
+    except: return []
 
-    count = len(history)
-    for entry in history:
-        args = entry.get("args", [])
-        if args:
-            if args[0].startswith("omarchy-"):
-                subprocess.Popen(args)
-            else:
-                subprocess.Popen(["uwsm-app", "--"] + args)
+def save_json(path, data):
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, "w") as f: json.dump(data, f)
 
-    # Clear history
-    with open(HISTORY_FILE, "w") as f:
-        json.dump([], f)
+def launch(args):
+    if args[0].startswith("omarchy-"):
+        subprocess.Popen(args)
+    else:
+        subprocess.Popen(["uwsm-app", "--"] + args)
 
-    notify("50fa7b", f" Restored {count} window{'s' if count != 1 else ''}")
+
+def main():
+    if get_mode() == "hide":
+        hidden = load_json(HIDDEN_FILE)
+        if not hidden:
+            notify("ff9900", " Keine versteckten Fenster")
+            return
+        for entry in hidden:
+            addr = entry.get("address", "")
+            if addr:
+                subprocess.run(["hyprctl", "dispatch", "movetoworkspace", f"e+0,address:{addr}"])
+        save_json(HIDDEN_FILE, [])
+        notify("50fa7b", f" {len(hidden)} Fenster wiederhergestellt")
+    else:
+        history = load_json(HISTORY_FILE)
+        if not history:
+            notify("ff9900", " Keine Fenster in der History")
+            return
+        for entry in history:
+            args = entry.get("args", [])
+            if args:
+                launch(args)
+        save_json(HISTORY_FILE, [])
+        notify("50fa7b", f" {len(history)} Fenster wiederhergestellt")
 
 
 if __name__ == "__main__":

@@ -1,0 +1,66 @@
+#!/usr/bin/env python3
+# hypr-restore-toggle-mode
+# Shows a Walker menu to switch between restore modes.
+
+import os
+import subprocess
+
+MODE_FILE = os.path.expanduser("~/.cache/hypr-restore-mode")
+
+MODES = {
+    "relaunch": "󰑓  Relaunch Mode  –  app restarts fresh (Tabs werden nicht erhalten)",
+    "hide":     "󰈉  Hide Mode      –  Prozess bleibt, Zustand bleibt (YouTube läuft weiter)",
+}
+
+
+def notify(color: str, msg: str) -> None:
+    subprocess.run(["hyprctl", "notify", "0", "3000", f"rgb({color})", msg])
+
+
+def get_mode() -> str:
+    try:
+        with open(MODE_FILE) as f:
+            return f.read().strip()
+    except Exception:
+        return "relaunch"
+
+
+def set_mode(mode: str) -> None:
+    os.makedirs(os.path.dirname(MODE_FILE), exist_ok=True)
+    with open(MODE_FILE, "w") as f:
+        f.write(mode)
+
+
+def main() -> None:
+    current = get_mode()
+
+    # Build menu: mark current mode with a checkmark
+    lines = []
+    for key, label in MODES.items():
+        marker = "  ✓ aktiv" if key == current else ""
+        lines.append(f"{label}{marker}")
+
+    menu_input = "\n".join(lines)
+
+    result = subprocess.run(
+        ["walker", "--dmenu", "--placeholder", "Restore Mode wählen"],
+        input=menu_input,
+        capture_output=True,
+        text=True,
+    )
+
+    selected = result.stdout.strip()
+    if not selected:
+        return
+
+    if "Relaunch" in selected:
+        set_mode("relaunch")
+        notify("8be9fd", "󰑓  Restore Mode: RELAUNCH – App startet neu")
+    elif "Hide" in selected:
+        set_mode("hide")
+        notify("bd93f9", "󰈉  Restore Mode: HIDE – Zustand bleibt erhalten")
+
+
+if __name__ == "__main__":
+    main()
+

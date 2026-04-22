@@ -14,28 +14,58 @@ Works for **all apps**: browser windows, PWAs (Teams, ChatGPT, etc.), terminals,
 | `SUPER+R` | Restore the last closed window |
 | `SUPER+SHIFT+R` | Restore **all** closed windows at once |
 | `SUPER+ALT+R` | Open a **picker menu** to choose which window to restore |
+| `SUPER+ALTGR+R` | Open **Settings** (mode, max windows, exclusions) |
 
-Up to **5 windows** are kept in history. Once the limit is reached, the oldest entry is dropped.
+## Restore Modes
+
+Switch between modes anytime via `SUPER+ALTGR+R → Modus wechseln`:
+
+### Relaunch Mode *(default)*
+`SUPER+W` kills the window and saves the launch command. `SUPER+R` restarts the app fresh.
+
+- ✅ Low memory usage (process is gone)
+- ❌ App content is lost (browser tabs, unsaved state)
+- 💡 Browsers can recover tabs via built-in session restore
+
+### Hide Mode
+`SUPER+W` moves the window to an invisible workspace. The process keeps running. `SUPER+R` brings it back exactly as it was.
+
+- ✅ Full state preserved — YouTube keeps playing, tabs stay open
+- ✅ Instant restore (no relaunch delay)
+- ❌ Uses more RAM (process stays alive)
+
+## Settings Menu (`SUPER+ALTGR+R`)
+
+| Option | Description |
+|---|---|
+| **Modus wechseln** | Toggle between Relaunch and Hide mode |
+| **Max. Fenster** | Set how many windows are kept in history (1–10, default 5) |
+| **Ausschlussliste** | Exclude specific apps from history (e.g. terminals) |
+
+### Exclusion List
+Apps on the exclusion list are closed/hidden normally but **not saved to history**. Useful for apps you never want to restore (e.g. `Alacritty`, `kitty`).
+
+To add an app: open `SUPER+ALTGR+R → Ausschlussliste → hinzufügen` — all currently open windows are shown as options.
 
 ## How it works
 
 When you press `SUPER+W`:
-1. The active window's identity is saved to `~/.cache/hypr-window-history.json`
-2. The window is closed normally
+1. The window class is checked against the exclusion list
+2. If not excluded, the window is saved to history
+3. In **Relaunch** mode: window is killed, launch command stored
+4. In **Hide** mode: window is moved to `special:windowtrash` (invisible)
 
-When you press `SUPER+R`:
-1. The most recently closed window is re-launched
-2. For browser PWAs (Teams, ChatGPT, etc.) — the correct `--app=URL` is used
-3. For regular browsers — `omarchy-launch-browser` is used
-4. For all other apps — the original executable + arguments are used
+For Chromium-based apps, the window **class** is used to identify the correct launch command (not the PID, since all Chromium windows share one process):
+- `class = chromium` → `omarchy-launch-browser`
+- `class = chrome-teams.cloud.microsoft__-Default` → `omarchy-launch-webapp https://teams.cloud.microsoft/`
 
-> **Note:** App *content* (e.g. browser tabs) is not preserved — the app simply relaunches. For browsers, the built-in session restore will recover your tabs.
+> **Note (Relaunch mode):** App *content* (e.g. browser tabs) is not preserved — the app simply relaunches. For browsers, built-in session restore will recover tabs.
 
 ## Requirements
 
 - [Omarchy](https://omarchy.org/) (Hyprland-based)
 - Python 3.10+
-- `walker` (included with Omarchy, used for the picker menu)
+- `walker` (included with Omarchy, used for picker and settings menus)
 
 ## Install
 
@@ -46,7 +76,7 @@ bash install.sh
 ```
 
 The install script:
-- Copies 4 scripts to `~/.local/bin/`
+- Copies scripts to `~/.local/bin/`
 - Adds keybindings to `~/.config/hypr/bindings.conf`
 - Hyprland reloads the config automatically — **no restart needed**
 
@@ -56,20 +86,27 @@ The install script:
 bash uninstall.sh
 ```
 
-This removes all scripts, keybindings and the history cache. `SUPER+W` returns to its default behavior.
+Removes all scripts, keybindings and the history cache. `SUPER+W` returns to its default behavior.
 
 ## Files
 
 ```
 ~/.local/bin/
-├── hypr-close-window       # SUPER+W: save to history, then killactive
-├── hypr-restore-window     # SUPER+R: restore last closed window
-├── hypr-restore-all        # SUPER+SHIFT+R: restore all windows
-└── hypr-restore-picker     # SUPER+ALT+R: walker picker menu
+├── hypr-close-window           # SUPER+W: save to history/hide, then close
+├── hypr-restore-window         # SUPER+R: restore last window
+├── hypr-restore-all            # SUPER+SHIFT+R: restore all windows
+├── hypr-restore-picker         # SUPER+ALT+R: walker picker menu
+├── hypr-restore-settings       # SUPER+ALTGR+R: settings menu
+└── hypr-restore-toggle-mode    # (internal) mode switch helper
 
-~/.cache/hypr-window-history.json   # Runtime history (max 5 entries)
+~/.cache/
+├── hypr-window-history.json    # Relaunch mode history (max N entries)
+├── hypr-restore-hidden.json    # Hide mode address list (max N entries)
+├── hypr-restore-mode           # Current mode: "relaunch" or "hide"
+└── hypr-restore-config.json    # Settings: max_windows, excluded_classes
 ```
 
 ## License
 
 MIT
+
