@@ -36,25 +36,25 @@ def main():
     if get_mode() == "hide":
         hidden = load_json(HIDDEN_FILE)
         if not hidden:
-            notify("ff9900", " Keine versteckten Fenster")
+            notify("ff9900", " No hidden windows")
             return
         for entry in hidden:
             addr = entry.get("address", "")
             if addr:
                 subprocess.run(["hyprctl", "dispatch", "movetoworkspace", f"e+0,address:{addr}"])
         save_json(HIDDEN_FILE, [])
-        notify("50fa7b", f" {len(hidden)} Fenster wiederhergestellt")
+        notify("50fa7b", f" {len(hidden)} window{'s' if len(hidden) != 1 else ''} restored")
     else:
         history = load_json(HISTORY_FILE)
         if not history:
-            notify("ff9900", " Keine Fenster in der History")
+            notify("ff9900", " No windows in history")
             return
         for entry in history:
             args = entry.get("args", [])
             if args:
                 launch(args)
         save_json(HISTORY_FILE, [])
-        notify("50fa7b", f" {len(history)} Fenster wiederhergestellt")
+        notify("50fa7b", f" {len(history)} window{'s' if len(history) != 1 else ''} restored")
 
 
 if __name__ == "__main__":

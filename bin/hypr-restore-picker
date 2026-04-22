@@ -34,7 +34,7 @@ def launch(args):
 def show_picker(entries, label_fn):
     labels = [f"{i+1}. {label_fn(e)}" for i, e in enumerate(entries)]
     result = subprocess.run(
-        ["walker", "--dmenu", "--placeholder", "Fenster wiederherstellen"],
+        ["walker", "--dmenu", "--placeholder", "Restore window"],
         input="\n".join(labels), capture_output=True, text=True
     )
     selected = result.stdout.strip()
@@ -50,7 +50,7 @@ def main():
     if get_mode() == "hide":
         hidden = load_json(HIDDEN_FILE)
         if not hidden:
-            notify("ff9900", " Keine versteckten Fenster")
+            notify("ff9900", " No hidden windows")
             return
         idx = show_picker(hidden, lambda e: e.get("class", "?"))
         if idx is None:
@@ -64,7 +64,7 @@ def main():
     else:
         history = load_json(HISTORY_FILE)
         if not history:
-            notify("ff9900", " Keine Fenster in der History")
+            notify("ff9900", " No windows in history")
             return
         def label(e):
             args = e.get("args", [])

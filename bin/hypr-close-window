@@ -71,9 +71,14 @@ def mode_hide(address, window_class, max_windows):
 
 
 def main():
-    r = subprocess.run(["hyprctl", "activewindow", "-j"], capture_output=True, text=True, timeout=2)
-    w = json.loads(r.stdout)
+    try:
+        r = subprocess.run(["hyprctl", "activewindow", "-j"], capture_output=True, text=True, timeout=3)
+        w = json.loads(r.stdout)
+    except Exception:
+        return  # No active window or hyprctl unavailable
     pid, window_class, address = w.get("pid", 0), w.get("class", ""), w.get("address", "")
+    if not window_class:
+        return  # Nothing focused (e.g. empty desktop)
 
     config     = get_config()
     max_windows = config.get("max_windows", 5)

@@ -41,13 +41,13 @@ def launch(args):
 def restore_relaunch():
     history = load_json(HISTORY_FILE)
     if not history:
-        notify("ff9900", " Keine Fenster in der History")
+        notify("ff9900", " No windows in history")
         return
     entry = history.pop(0)
     save_json(HISTORY_FILE, history)
     args = entry.get("args", [])
     if not args:
-        notify("ff5555", " Restore Fehler: kein Befehl gespeichert")
+        notify("ff5555", " Restore error: no command saved")
         return
     launch(args)
     notify("50fa7b", f" Restored: {entry.get('class', 'app')}")
@@ -56,13 +56,13 @@ def restore_relaunch():
 def restore_hide():
     hidden = load_json(HIDDEN_FILE)
     if not hidden:
-        notify("ff9900", " Keine versteckten Fenster")
+        notify("ff9900", " No hidden windows")
         return
     entry = hidden.pop(0)
     save_json(HIDDEN_FILE, hidden)
     addr = entry.get("address", "")
     if not addr:
-        notify("ff5555", " Restore Fehler: Adresse fehlt")
+        notify("ff5555", " Restore error: address missing")
         return
     subprocess.run(["hyprctl", "dispatch", "movetoworkspace", f"e+0,address:{addr}"])
     notify("50fa7b", f" Restored: {entry.get('class', 'app')}")

@@ -1,4 +1,4 @@
-# Omarchy easy Window Restore
+# Omarchy Window Restore
 
 > Never lose a closed window again on [Omarchy](https://omarchy.org/).
 
@@ -18,7 +18,7 @@ Works for **all apps**: browser windows, PWAs (Teams, ChatGPT, etc.), terminals,
 
 ## Restore Modes
 
-Switch between modes anytime via `SUPER+CTRL+R → Modus wechseln`:
+Switch between modes anytime via `SUPER+CTRL+R → Mode → switch`.
 
 ### Relaunch Mode *(default)*
 `SUPER+W` kills the window and saves the launch command. `SUPER+R` restarts the app fresh.
@@ -34,18 +34,48 @@ Switch between modes anytime via `SUPER+CTRL+R → Modus wechseln`:
 - ✅ Instant restore (no relaunch delay)
 - ❌ Uses more RAM (process stays alive)
 
+> **Note:** Switching from Hide → Relaunch mode will close all currently hidden windows.
+
 ## Settings Menu (`SUPER+CTRL+R`)
 
 | Option | Description |
 |---|---|
-| **Modus wechseln** | Toggle between Relaunch and Hide mode |
-| **Max. Fenster** | Set how many windows are kept in history (1–10, default 5) |
-| **Ausschlussliste** | Exclude specific apps from history (e.g. terminals) |
+| **Mode** | Toggle between Relaunch and Hide mode |
+| **Max windows** | Set how many windows are kept in history (default: 5, min: 1) |
+| **Exclusion list** | Exclude specific apps from history (e.g. terminals) |
 
 ### Exclusion List
-Apps on the exclusion list are closed/hidden normally but **not saved to history**. Useful for apps you never want to restore (e.g. `Alacritty`, `kitty`).
 
-To add an app: open `SUPER+CTRL+R → Ausschlussliste → hinzufügen` — all currently open windows are shown as options.
+Apps on the exclusion list are closed normally but **not saved to history**. Useful for apps you never want to restore.
+
+`org.omarchy.btop` (the system monitor) is excluded by default.
+
+To add an app, open `SUPER+CTRL+R → Exclusion list` and either:
+- **Pick from open windows** — select any currently open app
+- **Enter app ID manually** — type the window class directly
+
+#### How to find the window class of an app
+
+Run either of these commands:
+
+```bash
+# Class of the currently focused window
+hyprctl activewindow -j | jq '.class'
+
+# Classes of all open windows
+hyprctl clients -j | jq -r '.[].class'
+```
+
+Common examples:
+
+| App | Window class |
+|---|---|
+| Chromium | `chromium` |
+| VS Code | `code` |
+| Alacritty | `Alacritty` |
+| Spotify | `spotify` |
+| btop (Omarchy) | `org.omarchy.btop` |
+| Teams (PWA) | `chrome-teams.cloud.microsoft__-Default` |
 
 ## How it works
 
@@ -96,8 +126,7 @@ Removes all scripts, keybindings and the history cache. `SUPER+W` returns to its
 ├── hypr-restore-window         # SUPER+R: restore last window
 ├── hypr-restore-all            # SUPER+SHIFT+R: restore all windows
 ├── hypr-restore-picker         # SUPER+ALT+R: walker picker menu
-├── hypr-restore-settings       # SUPER+CTRL+R: settings menu
-└── hypr-restore-toggle-mode    # (internal) mode switch helper
+└── hypr-restore-settings       # SUPER+CTRL+R: settings menu
 
 ~/.cache/
 ├── hypr-window-history.json    # Relaunch mode history (max N entries)
