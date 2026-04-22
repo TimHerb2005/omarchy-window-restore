@@ -53,7 +53,7 @@ When you press `SUPER+W`:
 1. The window class is checked against the exclusion list
 2. If not excluded, the window is saved to history
 3. In **Relaunch** mode: window is killed, launch command stored
-4. In **Hide** mode: window is moved to `special:windowtrash` (invisible)
+4. In **Hide** mode: window is moved silently to workspace 99 (invisible, process stays alive)
 
 For Chromium-based apps, the window **class** is used to identify the correct launch command (not the PID, since all Chromium windows share one process):
 - `class = chromium` → `omarchy-launch-browser`
