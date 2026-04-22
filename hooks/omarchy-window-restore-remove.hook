@@ -1,0 +1,9 @@
+[Trigger]
+Operation = Remove
+Type = Package
+Target = omarchy-window-restore-git
+
+[Action]
+Description = Cleaning up Omarchy Window Restore user config...
+When = PreTransaction
+Exec = /usr/share/libalpm/scripts/omarchy-window-restore-remove
