@@ -14,11 +14,11 @@ Works for **all apps**: browser windows, PWAs (Teams, ChatGPT, etc.), terminals,
 | `SUPER+R` | Restore the last closed window |
 | `SUPER+SHIFT+R` | Restore **all** closed windows at once |
 | `SUPER+ALT+R` | Open a **picker menu** to choose which window to restore |
-| `SUPER+ALTGR+R` | Open **Settings** (mode, max windows, exclusions) |
+| `SUPER+CTRL+R` | Open **Settings** (mode, max windows, exclusions) |
 
 ## Restore Modes
 
-Switch between modes anytime via `SUPER+ALTGR+R → Modus wechseln`:
+Switch between modes anytime via `SUPER+CTRL+R → Modus wechseln`:
 
 ### Relaunch Mode *(default)*
 `SUPER+W` kills the window and saves the launch command. `SUPER+R` restarts the app fresh.
@@ -34,7 +34,7 @@ Switch between modes anytime via `SUPER+ALTGR+R → Modus wechseln`:
 - ✅ Instant restore (no relaunch delay)
 - ❌ Uses more RAM (process stays alive)
 
-## Settings Menu (`SUPER+ALTGR+R`)
+## Settings Menu (`SUPER+CTRL+R`)
 
 | Option | Description |
 |---|---|
@@ -45,7 +45,7 @@ Switch between modes anytime via `SUPER+ALTGR+R → Modus wechseln`:
 ### Exclusion List
 Apps on the exclusion list are closed/hidden normally but **not saved to history**. Useful for apps you never want to restore (e.g. `Alacritty`, `kitty`).
 
-To add an app: open `SUPER+ALTGR+R → Ausschlussliste → hinzufügen` — all currently open windows are shown as options.
+To add an app: open `SUPER+CTRL+R → Ausschlussliste → hinzufügen` — all currently open windows are shown as options.
 
 ## How it works
 
@@ -96,7 +96,7 @@ Removes all scripts, keybindings and the history cache. `SUPER+W` returns to its
 ├── hypr-restore-window         # SUPER+R: restore last window
 ├── hypr-restore-all            # SUPER+SHIFT+R: restore all windows
 ├── hypr-restore-picker         # SUPER+ALT+R: walker picker menu
-├── hypr-restore-settings       # SUPER+ALTGR+R: settings menu
+├── hypr-restore-settings       # SUPER+CTRL+R: settings menu
 └── hypr-restore-toggle-mode    # (internal) mode switch helper
 
 ~/.cache/
