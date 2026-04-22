@@ -9,7 +9,7 @@ MODE_FILE    = os.path.expanduser("~/.cache/hypr-restore-mode")
 
 
 def notify(color, msg):
-    subprocess.run(["hyprctl", "notify", "0", "3000", f"rgb({color})", msg])
+    subprocess.run(["notify-send", "-t", "3000", "Window Restore", msg])
 
 def get_mode():
     try:
