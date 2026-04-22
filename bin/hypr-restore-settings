@@ -188,20 +188,37 @@ def menu_exclusions(config):
         notify("50fa7b", f"  Re-included: {selected}")
 
 
+def menu_pause(config):
+    pause = config.get("pause_on_close", True)
+    new_val = pick([
+        "  On – pause media when closing/hiding a window" + ("  ✓" if pause else ""),
+        "  Off – never pause media automatically" + ("  ✓" if not pause else ""),
+    ], "Pause media on close")
+    if not new_val: return
+    enabled = "On" in new_val
+    config["pause_on_close"] = enabled
+    save_config(config)
+    icon = "" if enabled else "󰝟"
+    notify("50fa7b" if enabled else "ff9900", f"{icon}  Pause on close: {'ON' if enabled else 'OFF'}")
+
+
 def main():
     mode   = get_mode()
     config = get_config()
     max_w  = config.get("max_windows", 5)
     excl   = config.get("excluded_classes", [])
+    pause  = config.get("pause_on_close", True)
 
-    mode_label = "Hide" if mode == "hide" else "Relaunch"
-    mode_icon  = "󰈉" if mode == "hide" else "󰑓"
-    excl_count = len(excl)
+    mode_label  = "Hide" if mode == "hide" else "Relaunch"
+    mode_icon   = "󰈉" if mode == "hide" else "󰑓"
+    excl_count  = len(excl)
+    pause_label = "On" if pause else "Off"
 
     menu = [
         f"{mode_icon}  Mode: {mode_label}  →  switch",
         f"  Max windows: {max_w}  →  enter number",
         f"  Exclusion list ({excl_count})  →  manage",
+        f"  Pause media on close: {pause_label}  →  toggle",
     ]
 
     selected = pick(menu, "Window Restore Settings")
@@ -213,6 +230,8 @@ def main():
         menu_max(config)
     elif "Exclusion" in selected:
         menu_exclusions(config)
+    elif "Pause" in selected:
+        menu_pause(config)
 
 
 if __name__ == "__main__":

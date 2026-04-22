@@ -68,7 +68,7 @@ def pause_media(window_class):
         pass
 
 
-def mode_hide(address, window_class, max_windows):
+def mode_hide(address, window_class, max_windows, pause_on_close=True):
     hidden = load_json(HIDDEN_FILE)
     if len(hidden) >= max_windows:
         oldest = hidden.pop()
@@ -76,7 +76,8 @@ def mode_hide(address, window_class, max_windows):
     hidden.insert(0, {"address": address, "class": window_class})
     save_json(HIDDEN_FILE, hidden)
     # Pause any media playing in this window before hiding
-    pause_media(window_class)
+    if pause_on_close:
+        pause_media(window_class)
     # Move silently to high workspace — process keeps running, UI disappears
     subprocess.run(["hyprctl", "dispatch", "movetoworkspacesilent", str(HIDE_WS)])
 
@@ -94,16 +95,18 @@ def main():
     config     = get_config()
     max_windows = config.get("max_windows", 5)
     excluded   = config.get("excluded_classes", [])
+    pause_on_close = config.get("pause_on_close", True)
 
-    # If class is excluded: pause media then kill directly, never track or hide
+    # If class is excluded: pause media (if enabled) then kill directly, never track or hide
     if window_class in excluded:
-        pause_media(window_class)
+        if pause_on_close:
+            pause_media(window_class)
         subprocess.run(["hyprctl", "dispatch", "killactive"])
         return
 
     if get_mode() == "hide":
         if window_class and address:
-            mode_hide(address, window_class, max_windows)
+            mode_hide(address, window_class, max_windows, pause_on_close)
     else:
         if window_class and pid > 0:
             mode_relaunch(window_class, pid, max_windows)
