@@ -6,9 +6,19 @@ import json, os, subprocess
 HISTORY_FILE = os.path.expanduser("~/.cache/hypr-window-history.json")
 HIDDEN_FILE  = os.path.expanduser("~/.cache/hypr-restore-hidden.json")
 MODE_FILE    = os.path.expanduser("~/.cache/hypr-restore-mode")
+CONFIG_FILE  = os.path.expanduser("~/.cache/hypr-restore-config.json")
+
+
+def get_config():
+    try:
+        with open(CONFIG_FILE) as f: return json.load(f)
+    except: return {}
 
 
 def notify(color, msg):
+    cfg = get_config()
+    if not cfg.get("notifications_enabled", True):
+        return
     subprocess.run(["notify-send", "-t", "3000", "Window Restore", msg])
 
 def get_mode():

@@ -12,7 +12,11 @@ CONFIG_FILE  = os.path.expanduser("~/.cache/hypr-restore-config.json")
 DEFAULT_EXCLUDED = ["org.omarchy.btop"]
 
 
-def notify(color, msg):
+def notify(color, msg, config=None):
+    if config is None:
+        config = get_config()
+    if not config.get("notifications_enabled", True):
+        return
     subprocess.run(["notify-send", "-t", "3000", "Window Restore", msg])
 
 
@@ -30,7 +34,7 @@ def set_mode(mode):
 def get_config():
     try:
         with open(CONFIG_FILE) as f: return json.load(f)
-    except: return {"max_windows": 5, "excluded_classes": list(DEFAULT_EXCLUDED)}
+    except: return {"max_windows": 5, "excluded_classes": list(DEFAULT_EXCLUDED), "notifications_enabled": True}
 
 
 def save_config(cfg):
@@ -188,6 +192,20 @@ def menu_exclusions(config):
         notify("50fa7b", f"  Re-included: {selected}")
 
 
+def menu_notify(config):
+    enabled = config.get("notifications_enabled", True)
+    new_val = pick([
+        "  On – show notifications" + ("  ✓" if enabled else ""),
+        "󰂛  Off – suppress all notifications" + ("  ✓" if not enabled else ""),
+    ], "Notifications")
+    if not new_val: return
+    now_enabled = "On" in new_val
+    config["notifications_enabled"] = now_enabled
+    save_config(config)
+    if now_enabled:
+        notify("50fa7b", "  Notifications: ON", config)
+
+
 def menu_pause(config):
     pause = config.get("pause_on_close", True)
     new_val = pick([
@@ -213,12 +231,14 @@ def main():
     mode_icon   = "󰈉" if mode == "hide" else "󰑓"
     excl_count  = len(excl)
     pause_label = "On" if pause else "Off"
+    notif_label = "On" if config.get("notifications_enabled", True) else "Off"
 
     menu = [
         f"{mode_icon}  Mode: {mode_label}  →  switch",
         f"  Max windows: {max_w}  →  enter number",
         f"  Exclusion list ({excl_count})  →  manage",
         f"  Pause media on close: {pause_label}  →  toggle",
+        f"  Notifications: {notif_label}  →  toggle",
     ]
 
     selected = pick(menu, "Window Restore Settings")
@@ -232,6 +252,8 @@ def main():
         menu_exclusions(config)
     elif "Pause" in selected:
         menu_pause(config)
+    elif "Notifications" in selected:
+        menu_notify(config)
 
 
 if __name__ == "__main__":
