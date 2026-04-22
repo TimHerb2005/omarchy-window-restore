@@ -9,7 +9,7 @@ BINDINGS_FILE="$HOME/.config/hypr/bindings.conf"
 echo "Uninstalling Omarchy Window Restore..."
 
 # Remove scripts
-for script in hypr-close-window hypr-restore-window hypr-restore-all hypr-restore-picker; do
+for script in hypr-close-window hypr-restore-window hypr-restore-all hypr-restore-picker hypr-restore-settings hypr-restore-toggle-mode; do
   rm -f "$BIN_DIR/$script"
 done
 echo "  ✓ Scripts removed"
@@ -44,9 +44,13 @@ EOF
   echo "  ℹ  SUPER+W is restored to default (killactive) behavior"
 fi
 
-# Clean up history cache
+# Clean up all cache files
 rm -f "$HOME/.cache/hypr-window-history.json"
-echo "  ✓ History cleared"
+rm -f "$HOME/.cache/hypr-window-history.log"
+rm -f "$HOME/.cache/hypr-restore-hidden.json"
+rm -f "$HOME/.cache/hypr-restore-mode"
+rm -f "$HOME/.cache/hypr-restore-config.json"
+echo "  ✓ Cache cleared"
 
 echo ""
 echo "Uninstall complete."
