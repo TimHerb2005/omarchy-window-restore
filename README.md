@@ -6,6 +6,8 @@ Replaces `SUPER+W` with a smarter close that saves windows to a history stack â€
 
 Works for **all apps**: browser windows, PWAs (Teams, ChatGPT, etc.), terminals, editors, and more.
 
+<video src="demo.mp4" controls autoplay loop muted width="100%"></video>
+
 ## Keybindings
 
 | Shortcut | Action |
