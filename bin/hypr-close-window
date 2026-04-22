@@ -99,12 +99,9 @@ def main():
     max_windows = config.get("max_windows", 5)
     excluded   = config.get("excluded_classes", [])
 
-    # If class is excluded: just kill/hide without saving to history
+    # If class is excluded: always kill directly, never track or hide
     if window_class in excluded:
-        if get_mode() == "hide":
-            subprocess.run(["hyprctl", "dispatch", "movetoworkspacesilent", str(HIDE_WS)])
-        else:
-            subprocess.run(["hyprctl", "dispatch", "killactive"])
+        subprocess.run(["hyprctl", "dispatch", "killactive"])
         return
 
     if get_mode() == "hide":
