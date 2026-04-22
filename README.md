@@ -10,13 +10,16 @@ Works for **all apps**: browser windows, PWAs (Teams, ChatGPT, etc.), terminals,
 
 ## Keybindings
 
+All keybindings are automatically listed in Omarchy's built-in keybinding menu (`SUPER+K`).
+
 | Shortcut | Action |
 |---|---|
 | `SUPER+W` | Close window *(saved to history)* |
+| `SUPER+ALT+W` | Close window **permanently** *(no history, cannot be restored)* |
 | `SUPER+R` | Restore the last closed window |
 | `SUPER+SHIFT+R` | Restore **all** closed windows at once |
 | `SUPER+ALT+R` | Open a **picker menu** to choose which window to restore |
-| `SUPER+CTRL+R` | Open **Settings** (mode, max windows, exclusions) |
+| `SUPER+CTRL+R` | Open **Settings** (mode, max windows, exclusions, workspace) |
 
 ## Restore Modes
 
@@ -45,6 +48,9 @@ Switch between modes anytime via `SUPER+CTRL+R → Mode → switch`.
 | **Mode** | Toggle between Relaunch and Hide mode |
 | **Max windows** | Set how many windows are kept in history (default: 5, min: 1) |
 | **Exclusion list** | Exclude specific apps from history (e.g. terminals) |
+| **Pause media on close** | Pause media players when a window is closed/hidden (default: on) |
+| **Notifications** | Enable or disable desktop notifications (default: on) |
+| **Hide workspace** | The workspace number used to hide windows in Hide mode (default: 99) |
 
 ### Exclusion List
 
@@ -85,7 +91,7 @@ When you press `SUPER+W`:
 1. The window class is checked against the exclusion list
 2. If not excluded, the window is saved to history
 3. In **Relaunch** mode: window is killed, launch command stored
-4. In **Hide** mode: window is moved silently to workspace 99 (invisible, process stays alive)
+4. In **Hide** mode: window is moved silently to the hide workspace (invisible, process stays alive)
 
 For Chromium-based apps, the window **class** is used to identify the correct launch command (not the PID, since all Chromium windows share one process):
 - `class = chromium` → `omarchy-launch-browser`
@@ -154,7 +160,7 @@ Removes all scripts, keybindings and the history cache. `SUPER+W` returns to its
 ├── hypr-window-history.json    # Relaunch mode history (max N entries)
 ├── hypr-restore-hidden.json    # Hide mode address list (max N entries)
 ├── hypr-restore-mode           # Current mode: "relaunch" or "hide"
-└── hypr-restore-config.json    # Settings: max_windows, excluded_classes
+└── hypr-restore-config.json    # Settings: max_windows, excluded_classes, hide_workspace, ...
 ```
 
 ## License
