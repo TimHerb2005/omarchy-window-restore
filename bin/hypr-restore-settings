@@ -220,12 +220,29 @@ def menu_pause(config):
     notify("50fa7b" if enabled else "ff9900", f"{icon}  Pause on close: {'ON' if enabled else 'OFF'}")
 
 
+def menu_ws(config):
+    ws = config.get("hide_workspace", 99)
+    raw = input_text(f"Hide workspace number (current: {ws})")
+    if not raw: return
+    try:
+        n = int(raw)
+        if n < 1:
+            notify("ff5555", "  Invalid: workspace must be >= 1")
+            return
+        config["hide_workspace"] = n
+        save_config(config)
+        notify("50fa7b", f"  Hide workspace: {n}")
+    except ValueError:
+        notify("ff5555", f"  Invalid: '{raw}' is not a number")
+
+
 def main():
     mode   = get_mode()
     config = get_config()
     max_w  = config.get("max_windows", 5)
     excl   = config.get("excluded_classes", [])
     pause  = config.get("pause_on_close", True)
+    hide_ws = config.get("hide_workspace", 99)
 
     mode_label  = "Hide" if mode == "hide" else "Relaunch"
     mode_icon   = "󰈉" if mode == "hide" else "󰑓"
@@ -239,6 +256,7 @@ def main():
         f"  Exclusion list ({excl_count})  →  manage",
         f"  Pause media on close: {pause_label}  →  toggle",
         f"  Notifications: {notif_label}  →  toggle",
+        f"  Hide workspace: {hide_ws}  →  enter number",
     ]
 
     selected = pick(menu, "Window Restore Settings")
@@ -254,6 +272,8 @@ def main():
         menu_pause(config)
     elif "Notifications" in selected:
         menu_notify(config)
+    elif "workspace" in selected:
+        menu_ws(config)
 
 
 if __name__ == "__main__":

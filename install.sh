@@ -34,6 +34,7 @@ bindd = SUPER, R, Restore last closed window, exec, python3 ~/.local/bin/hypr-re
 bindd = SUPER SHIFT, R, Restore all closed windows, exec, python3 ~/.local/bin/hypr-restore-all
 bindd = SUPER ALT, R, Pick window to restore (menu), exec, python3 ~/.local/bin/hypr-restore-picker
 bindd = SUPER CTRL, R, Window Restore settings, exec, python3 ~/.local/bin/hypr-restore-settings
+bindd = SUPER ALT, W, Close window permanently (no history), killactive,
 BINDINGS
   echo "  ✓ Keybindings added to $BINDINGS_FILE"
 fi
@@ -41,7 +42,7 @@ fi
 # Create default config (idempotent – skip if already present)
 if [ ! -f "$CONFIG_FILE" ]; then
   mkdir -p "$(dirname "$CONFIG_FILE")"
-  echo '{"max_windows": 5, "excluded_classes": ["org.omarchy.btop"], "pause_on_close": true, "notifications_enabled": true}' > "$CONFIG_FILE"
+  echo '{"max_windows": 5, "excluded_classes": ["org.omarchy.btop"], "pause_on_close": true, "notifications_enabled": true, "hide_workspace": 99}' > "$CONFIG_FILE"
   echo "  ✓ Default config created (btop excluded by default)"
 fi
 
@@ -49,7 +50,8 @@ echo ""
 echo "Done! Keybindings are active immediately."
 echo ""
 echo "  SUPER+W           → Close window (saved to history)"
+echo "  SUPER+ALT+W       → Close window permanently (no history)"
 echo "  SUPER+R           → Restore last closed window"
 echo "  SUPER+SHIFT+R     → Restore all closed windows"
 echo "  SUPER+ALT+R       → Pick window to restore (menu)"
-echo "  SUPER+CTRL+R      → Settings (mode, max windows, exclusions, pause, notifications)"
+echo "  SUPER+CTRL+R      → Settings (mode, max windows, exclusions, pause, notifications, workspace)"
