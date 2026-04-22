@@ -1,12 +1,14 @@
 #!/bin/bash
-# uninstall.sh – removes Omarchy Window Restore
+# omarchy-uninstall-window-restore
+# Removes Window Restore from the current user.
+# Run this before: sudo pacman -R omarchy-window-restore-git
 
 set -e
 
 BIN_DIR="$HOME/.local/bin"
 BINDINGS_FILE="$HOME/.config/hypr/bindings.conf"
 
-echo "Uninstalling Omarchy Window Restore..."
+echo "Deactivating Omarchy Window Restore..."
 
 # Remove scripts
 for script in hypr-close-window hypr-restore-window hypr-restore-all hypr-restore-picker hypr-restore-settings; do
@@ -14,9 +16,8 @@ for script in hypr-close-window hypr-restore-window hypr-restore-all hypr-restor
 done
 echo "  ✓ Scripts removed"
 
-# Remove keybindings block (everything between marker and next blank line after block)
+# Remove keybindings block
 if grep -q "# Window Restore" "$BINDINGS_FILE" 2>/dev/null; then
-  # Remove the block including the unbind and 4 bind lines
   python3 - "$BINDINGS_FILE" << 'EOF'
 import sys
 
@@ -40,11 +41,11 @@ while i < len(lines):
 with open(path, "w") as f:
     f.writelines(out)
 EOF
-  echo "  ✓ Keybindings removed"
+  echo "  ✓ Keybindings removed from $BINDINGS_FILE"
   echo "  ℹ  SUPER+W is restored to default (killactive) behavior"
 fi
 
-# Clean up all cache files
+# Clean up cache files
 rm -f "$HOME/.cache/hypr-window-history.json"
 rm -f "$HOME/.cache/hypr-window-history.log"
 rm -f "$HOME/.cache/hypr-restore-hidden.json"
@@ -53,4 +54,5 @@ rm -f "$HOME/.cache/hypr-restore-config.json"
 echo "  ✓ Cache cleared"
 
 echo ""
-echo "Uninstall complete."
+echo "Done! Window Restore has been fully removed for your user."
+echo "You can now safely run: sudo pacman -R omarchy-window-restore-git"

@@ -6,7 +6,7 @@ Replaces `SUPER+W` with a smarter close that saves windows to a history stack â€
 
 Works for **all apps**: browser windows, PWAs (Teams, ChatGPT, etc.), terminals, editors, and more.
 
-<video src="https://github.com/TimHerb2005/omarchy-window-restore/releases/download/v1.2.0/demo.mp4" controls autoplay loop muted width="100%"></video>
+![Demo](https://github.com/TimHerb2005/omarchy-window-restore/releases/download/v1.4.0/demo.gif)
 
 ## Keybindings
 

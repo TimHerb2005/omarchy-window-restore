@@ -41,7 +41,7 @@ fi
 # Create default config (idempotent – skip if already present)
 if [ ! -f "$CONFIG_FILE" ]; then
   mkdir -p "$(dirname "$CONFIG_FILE")"
-  echo '{"max_windows": 5, "excluded_classes": ["org.omarchy.btop"]}' > "$CONFIG_FILE"
+  echo '{"max_windows": 5, "excluded_classes": ["org.omarchy.btop"], "pause_on_close": true, "notifications_enabled": true}' > "$CONFIG_FILE"
   echo "  ✓ Default config created (btop excluded by default)"
 fi
 
@@ -52,4 +52,4 @@ echo "  SUPER+W           → Close window (saved to history)"
 echo "  SUPER+R           → Restore last closed window"
 echo "  SUPER+SHIFT+R     → Restore all closed windows"
 echo "  SUPER+ALT+R       → Pick window to restore (menu)"
-echo "  SUPER+CTRL+R      → Settings (mode, max windows, exclusions)"
+echo "  SUPER+CTRL+R      → Settings (mode, max windows, exclusions, pause, notifications)"
