@@ -1,0 +1,10 @@
+[Trigger]
+Operation = Install
+Operation = Upgrade
+Type = Package
+Target = omarchy-window-restore-git
+
+[Action]
+Description = Updating Omarchy Window Restore user scripts...
+When = PostTransaction
+Exec = /bin/sh -c 'for h in /home/*/; do u=$(basename "$h"); if [ -f "$h/.local/bin/hypr-close-window" ]; then runuser -l "$u" -c "omarchy-install-window-restore" 2>/dev/null || true; fi; done'
