@@ -35,6 +35,37 @@ def save_json(path, data):
     with open(path, "w") as f: json.dump(data, f)
 
 
+def get_ws99_addresses():
+    """Return set of window addresses currently on workspace 99."""
+    try:
+        r = subprocess.run(["hyprctl", "clients", "-j"], capture_output=True, text=True)
+        clients = json.loads(r.stdout)
+        return {c["address"] for c in clients if c.get("workspace", {}).get("id") == HIDE_WS}
+    except:
+        return set()
+
+
+def sync_hidden():
+    """Sync HIDDEN_FILE with actual WS 99 contents.
+    - Removes entries whose windows are no longer on WS 99
+    - Kills WS 99 windows that are not tracked (orphans)
+    Returns the cleaned hidden list."""
+    hidden = load_json(HIDDEN_FILE)
+    ws99 = get_ws99_addresses()
+    tracked = {h["address"] for h in hidden}
+
+    # Kill orphans: in WS 99 but not in hidden list
+    for addr in ws99 - tracked:
+        subprocess.run(["hyprctl", "dispatch", "closewindow", f"address:{addr}"],
+                       capture_output=True)
+
+    # Remove stale entries: in hidden list but not in WS 99
+    cleaned = [h for h in hidden if h["address"] in ws99]
+    if len(cleaned) != len(hidden):
+        save_json(HIDDEN_FILE, cleaned)
+    return cleaned
+
+
 def get_launch_args(window_class, pid):
     pwa = re.match(r"^chrome-([^_]+)__.*-Default$", window_class)
     if pwa:
@@ -76,10 +107,11 @@ def pause_media(window_class):
 
 
 def mode_hide(address, window_class, max_windows, pause_on_close=True):
-    hidden = load_json(HIDDEN_FILE)
+    hidden = sync_hidden()  # sync with actual WS 99 state first
     if len(hidden) >= max_windows:
         oldest = hidden.pop()
-        subprocess.run(["hyprctl", "dispatch", "closewindow", f"address:{oldest['address']}"])
+        subprocess.run(["hyprctl", "dispatch", "closewindow", f"address:{oldest['address']}"],
+                       capture_output=True)
     hidden.insert(0, {"address": address, "class": window_class})
     save_json(HIDDEN_FILE, hidden)
     # Pause any media playing in this window before hiding

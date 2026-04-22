@@ -7,6 +7,7 @@ HISTORY_FILE = os.path.expanduser("~/.cache/hypr-window-history.json")
 HIDDEN_FILE  = os.path.expanduser("~/.cache/hypr-restore-hidden.json")
 MODE_FILE    = os.path.expanduser("~/.cache/hypr-restore-mode")
 CONFIG_FILE  = os.path.expanduser("~/.cache/hypr-restore-config.json")
+HIDE_WS      = 99
 
 
 def get_config():
@@ -42,9 +43,32 @@ def launch(args):
         subprocess.Popen(["uwsm-app", "--"] + args)
 
 
+def get_ws99_addresses():
+    try:
+        r = subprocess.run(["hyprctl", "clients", "-j"], capture_output=True, text=True)
+        clients = json.loads(r.stdout)
+        return {c["address"] for c in clients if c.get("workspace", {}).get("id") == HIDE_WS}
+    except:
+        return set()
+
+
+def sync_hidden():
+    """Remove stale entries and kill orphan WS 99 windows."""
+    hidden = load_json(HIDDEN_FILE)
+    ws99 = get_ws99_addresses()
+    tracked = {h["address"] for h in hidden}
+    for addr in ws99 - tracked:
+        subprocess.run(["hyprctl", "dispatch", "closewindow", f"address:{addr}"],
+                       capture_output=True)
+    cleaned = [h for h in hidden if h["address"] in ws99]
+    if len(cleaned) != len(hidden):
+        save_json(HIDDEN_FILE, cleaned)
+    return cleaned
+
+
 def main():
     if get_mode() == "hide":
-        hidden = load_json(HIDDEN_FILE)
+        hidden = sync_hidden()
         if not hidden:
             notify("ff9900", " No hidden windows")
             return
