@@ -4,6 +4,8 @@
 
 import json, os, subprocess
 
+HISTORY_FILE = os.path.expanduser("~/.cache/hypr-window-history.json")
+HIDDEN_FILE  = os.path.expanduser("~/.cache/hypr-restore-hidden.json")
 MODE_FILE   = os.path.expanduser("~/.cache/hypr-restore-mode")
 CONFIG_FILE = os.path.expanduser("~/.cache/hypr-restore-config.json")
 
@@ -52,7 +54,37 @@ def input_text(placeholder):
     return result.stdout.strip()
 
 
-def menu_mode(mode):
+def load_json(path):
+    try:
+        with open(path) as f: return json.load(f)
+    except: return []
+
+
+def save_json(path, data):
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, "w") as f: json.dump(data, f)
+
+
+def trim_history(n):
+    """Truncate relaunch history to n entries."""
+    h = load_json(HISTORY_FILE)
+    if len(h) > n:
+        save_json(HISTORY_FILE, h[:n])
+
+
+def trim_hidden(n):
+    """Truncate hidden list to n entries, killing the excess windows."""
+    hidden = load_json(HIDDEN_FILE)
+    if len(hidden) > n:
+        to_kill = hidden[n:]
+        for entry in to_kill:
+            addr = entry.get("address", "")
+            if addr:
+                subprocess.run(["hyprctl", "dispatch", "closewindow", f"address:{addr}"])
+        save_json(HIDDEN_FILE, hidden[:n])
+
+
+
     new_mode = pick([
         "󰑓  Relaunch – App startet neu (Standard)" + ("  ✓" if mode == "relaunch" else ""),
         "󰈉  Hide – Prozess bleibt, YouTube läuft weiter" + ("  ✓" if mode == "hide" else ""),
@@ -78,6 +110,8 @@ def menu_max(config):
             return
         config["max_windows"] = n
         save_config(config)
+        trim_history(n)
+        trim_hidden(n)
         notify("50fa7b", f"  Max. Fenster: {n}")
     except ValueError:
         notify("ff5555", f"  Ungültig: '{raw}' ist keine Zahl")
