@@ -60,10 +60,17 @@ def mode_relaunch(window_class, pid, max_windows):
 
 
 def pause_media(window_class):
-    """Pause the media player associated with this window only."""
+    """Pause all media players associated with this window class."""
     try:
-        # playerctl player names are lowercase; window classes may have capitals
-        subprocess.run(["playerctl", "-p", window_class.lower(), "pause"], capture_output=True)
+        result = subprocess.run(["playerctl", "-l"], capture_output=True, text=True)
+        players = [p for p in result.stdout.strip().split("\n") if p]
+        # Match ALL instances of this player (e.g. chromium.instance1, chromium.instance2)
+        matched = [p for p in players if p.lower().startswith(window_class.lower())]
+        if matched:
+            subprocess.run(
+                ["playerctl", "-p", ",".join(matched), "pause"],
+                capture_output=True
+            )
     except Exception:
         pass
 
