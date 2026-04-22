@@ -112,7 +112,7 @@ bash install.sh
 Install via any AUR helper:
 
 ```bash
-yay -S omarchy-window-restore
+yay -S omarchy-window-restore-git
 ```
 
 Then activate for your user:
@@ -121,7 +121,7 @@ Then activate for your user:
 omarchy-install-window-restore
 ```
 
-Or via the **Omarchy Menu**: `Install → AUR` → type `omarchy-window-restore`, then run `omarchy-install-window-restore` in a terminal afterwards.
+Or via the **Omarchy Menu**: `Install → AUR` → type `omarchy-window-restore-git`, then run `omarchy-install-window-restore` in a terminal afterwards.
 
 ---
 
