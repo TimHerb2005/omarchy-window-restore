@@ -6,8 +6,10 @@ import json, os, subprocess
 
 HISTORY_FILE = os.path.expanduser("~/.cache/hypr-window-history.json")
 HIDDEN_FILE  = os.path.expanduser("~/.cache/hypr-restore-hidden.json")
-MODE_FILE   = os.path.expanduser("~/.cache/hypr-restore-mode")
-CONFIG_FILE = os.path.expanduser("~/.cache/hypr-restore-config.json")
+MODE_FILE    = os.path.expanduser("~/.cache/hypr-restore-mode")
+CONFIG_FILE  = os.path.expanduser("~/.cache/hypr-restore-config.json")
+
+DEFAULT_EXCLUDED = ["org.omarchy.btop"]
 
 
 def notify(color, msg):
@@ -28,7 +30,7 @@ def set_mode(mode):
 def get_config():
     try:
         with open(CONFIG_FILE) as f: return json.load(f)
-    except: return {"max_windows": 5, "excluded_classes": []}
+    except: return {"max_windows": 5, "excluded_classes": list(DEFAULT_EXCLUDED)}
 
 
 def save_config(cfg):
@@ -84,63 +86,77 @@ def trim_hidden(n):
         save_json(HIDDEN_FILE, hidden[:n])
 
 
+def kill_all_hidden():
+    """Kill all processes currently hidden on workspace 99 and clear the hidden list."""
+    hidden = load_json(HIDDEN_FILE)
+    killed = 0
+    for entry in hidden:
+        addr = entry.get("address", "")
+        if addr:
+            subprocess.run(["hyprctl", "dispatch", "closewindow", f"address:{addr}"])
+            killed += 1
+    save_json(HIDDEN_FILE, [])
+    return killed
 
+
+def menu_mode(mode):
     new_mode = pick([
-        "󰑓  Relaunch – App startet neu (Standard)" + ("  ✓" if mode == "relaunch" else ""),
-        "󰈉  Hide – Prozess bleibt, YouTube läuft weiter" + ("  ✓" if mode == "hide" else ""),
-    ], "Modus wählen")
+        "󰑓  Relaunch – app restarts fresh (default)" + ("  ✓" if mode == "relaunch" else ""),
+        "󰈉  Hide – process stays alive, YouTube keeps playing" + ("  ✓" if mode == "hide" else ""),
+    ], "Select mode")
     if not new_mode: return
-    if "Relaunch" in new_mode:
+    if "Relaunch" in new_mode and mode != "relaunch":
+        # Kill all hidden windows before switching — their state can't be used in relaunch mode
+        killed = kill_all_hidden()
         set_mode("relaunch")
-        notify("8be9fd", "󰑓  Modus: RELAUNCH")
-    elif "Hide" in new_mode:
+        msg = f"󰑓  Mode: RELAUNCH  ({killed} hidden window{'s' if killed != 1 else ''} closed)" if killed else "󰑓  Mode: RELAUNCH"
+        notify("8be9fd", msg)
+    elif "Hide" in new_mode and mode != "hide":
         set_mode("hide")
-        notify("bd93f9", "󰈉  Modus: HIDE – Zustand bleibt erhalten")
+        notify("bd93f9", "󰈉  Mode: HIDE – state is preserved")
 
 
 def menu_max(config):
     max_w = config.get("max_windows", 5)
-    raw = input_text(f"Max. Fenster in History (aktuell: {max_w})")
+    raw = input_text(f"Max windows in history (current: {max_w})")
     if not raw:
         return
     try:
         n = int(raw)
         if n < 1:
-            notify("ff5555", f"  Ungültig: Wert muss mindestens 1 sein")
+            notify("ff5555", "  Invalid: value must be at least 1")
             return
         config["max_windows"] = n
         save_config(config)
         trim_history(n)
         trim_hidden(n)
-        notify("50fa7b", f"  Max. Fenster: {n}")
+        notify("50fa7b", f"  Max windows: {n}")
     except ValueError:
-        notify("ff5555", f"  Ungültig: '{raw}' ist keine Zahl")
+        notify("ff5555", f"  Invalid: '{raw}' is not a number")
 
 
 def menu_exclusions(config):
     excluded = config.get("excluded_classes", [])
 
     action = pick([
-        "  App-ID manuell eingeben",
-        "  Aus offenen Fenstern wählen",
-        f"  Eintrag entfernen  ({len(excluded)} in Liste)" if excluded else "  Eintrag entfernen  (Liste leer)",
-    ], "Ausschlussliste verwalten")
+        "  Enter app ID manually",
+        "  Pick from open windows",
+        f"  Remove entry  ({len(excluded)} in list)" if excluded else "  Remove entry  (list empty)",
+    ], "Manage exclusion list")
     if not action: return
 
-    if "manuell" in action:
-        # Freeform: user types any class/ID
-        app_id = input_text("App-Klasse eingeben  (z.B. Alacritty, code, spotify)")
+    if "manually" in action:
+        app_id = input_text("Enter app class  (e.g. Alacritty, code, spotify)")
         if not app_id: return
         if app_id in excluded:
-            notify("ff9900", f"  '{app_id}' ist bereits ausgeschlossen")
+            notify("ff9900", f"  '{app_id}' is already excluded")
             return
         excluded.append(app_id)
         config["excluded_classes"] = excluded
         save_config(config)
-        notify("ffb86c", f"  Ausgeschlossen: {app_id}")
+        notify("ffb86c", f"  Excluded: {app_id}")
 
-    elif "offenen" in action:
-        # Pick from currently open window classes
+    elif "open" in action:
         try:
             r = subprocess.run(["hyprctl", "clients", "-j"], capture_output=True, text=True)
             clients = json.loads(r.stdout)
@@ -151,25 +167,25 @@ def menu_exclusions(config):
         except:
             classes = []
         if not classes:
-            notify("ff9900", "  Keine neuen Apps offen")
+            notify("ff9900", "  No new apps open")
             return
-        selected = pick(classes, "App ausschließen")
+        selected = pick(classes, "Select app to exclude")
         if not selected: return
         excluded.append(selected)
         config["excluded_classes"] = excluded
         save_config(config)
-        notify("ffb86c", f"  Ausgeschlossen: {selected}")
+        notify("ffb86c", f"  Excluded: {selected}")
 
-    elif "entfernen" in action:
+    elif "Remove" in action:
         if not excluded:
-            notify("ff9900", "  Ausschlussliste ist leer")
+            notify("ff9900", "  Exclusion list is empty")
             return
-        selected = pick(excluded, "Ausschluss aufheben")
+        selected = pick(excluded, "Select entry to remove")
         if not selected: return
         excluded.remove(selected)
         config["excluded_classes"] = excluded
         save_config(config)
-        notify("50fa7b", f"  Wieder eingeschlossen: {selected}")
+        notify("50fa7b", f"  Re-included: {selected}")
 
 
 def main():
@@ -180,22 +196,22 @@ def main():
 
     mode_label = "Hide" if mode == "hide" else "Relaunch"
     mode_icon  = "󰈉" if mode == "hide" else "󰑓"
-    excl_label = ", ".join(excl[:3]) + ("…" if len(excl) > 3 else "") if excl else "keine"
+    excl_label = ", ".join(excl[:3]) + ("…" if len(excl) > 3 else "") if excl else "none"
 
     menu = [
-        f"{mode_icon}  Modus: {mode_label}  →  wechseln",
-        f"  Max. Fenster: {max_w}  →  Zahl eingeben",
-        f"  Ausschlussliste: {excl_label}  →  verwalten",
+        f"{mode_icon}  Mode: {mode_label}  →  switch",
+        f"  Max windows: {max_w}  →  enter number",
+        f"  Exclusion list: {excl_label}  →  manage",
     ]
 
-    selected = pick(menu, "Window Restore Einstellungen")
+    selected = pick(menu, "Window Restore Settings")
     if not selected: return
 
-    if "Modus" in selected:
+    if "Mode" in selected:
         menu_mode(mode)
     elif "Max" in selected:
         menu_max(config)
-    elif "Ausschluss" in selected:
+    elif "Exclusion" in selected:
         menu_exclusions(config)
 
 
