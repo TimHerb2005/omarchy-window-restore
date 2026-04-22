@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# hypr-restore-settings: SUPER+AltGr+R
+# hypr-restore-settings: SUPER+CTRL+R
 # Walker menu to configure Window Restore settings.
 
 import json, os, subprocess
@@ -35,9 +35,19 @@ def save_config(cfg):
 
 
 def pick(items, placeholder):
+    """Show a walker dmenu with predefined options."""
     result = subprocess.run(
         ["walker", "--dmenu", "--placeholder", placeholder],
         input="\n".join(items), capture_output=True, text=True
+    )
+    return result.stdout.strip()
+
+
+def input_text(placeholder):
+    """Show a walker freeform text input."""
+    result = subprocess.run(
+        ["walker", "--dmenu", "--inputonly", "--placeholder", placeholder],
+        input="", capture_output=True, text=True
     )
     return result.stdout.strip()
 
@@ -58,46 +68,59 @@ def menu_mode(mode):
 
 def menu_max(config):
     max_w = config.get("max_windows", 5)
-    options = [f"  {n} Fenster" + ("  ✓" if n == max_w else "") for n in range(1, 11)]
-    picked = pick(options, "Maximale Fenster in History")
-    if not picked: return
+    raw = input_text(f"Max. Fenster in History (aktuell: {max_w})")
+    if not raw:
+        return
     try:
-        n = int(picked.strip().split()[0])
+        n = int(raw)
+        if n < 1:
+            notify("ff5555", f"  Ungültig: Wert muss mindestens 1 sein")
+            return
         config["max_windows"] = n
         save_config(config)
-        notify("50fa7b", f"  Max. Fenster in History: {n}")
-    except (ValueError, IndexError): pass
+        notify("50fa7b", f"  Max. Fenster: {n}")
+    except ValueError:
+        notify("ff5555", f"  Ungültig: '{raw}' ist keine Zahl")
 
 
 def menu_exclusions(config):
     excluded = config.get("excluded_classes", [])
 
     action = pick([
-        "  App zur Ausschlussliste hinzufügen",
-        f"  App entfernen  ({len(excluded)} ausgeschlossen)" if excluded else "  App entfernen  (Liste leer)",
+        "  App-ID manuell eingeben",
+        "  Aus offenen Fenstern wählen",
+        f"  Eintrag entfernen  ({len(excluded)} in Liste)" if excluded else "  Eintrag entfernen  (Liste leer)",
     ], "Ausschlussliste verwalten")
     if not action: return
 
-    if "hinzufügen" in action:
-        # Get all currently open window classes
+    if "manuell" in action:
+        # Freeform: user types any class/ID
+        app_id = input_text("App-Klasse eingeben  (z.B. Alacritty, code, spotify)")
+        if not app_id: return
+        if app_id in excluded:
+            notify("ff9900", f"  '{app_id}' ist bereits ausgeschlossen")
+            return
+        excluded.append(app_id)
+        config["excluded_classes"] = excluded
+        save_config(config)
+        notify("ffb86c", f"  Ausgeschlossen: {app_id}")
+
+    elif "offenen" in action:
+        # Pick from currently open window classes
         try:
             r = subprocess.run(["hyprctl", "clients", "-j"], capture_output=True, text=True)
             clients = json.loads(r.stdout)
-            # Deduplicate, skip already excluded
             classes = sorted(set(
                 c["class"] for c in clients
                 if c.get("class") and c["class"] not in excluded
             ))
         except:
             classes = []
-
         if not classes:
             notify("ff9900", "  Keine neuen Apps offen")
             return
-
-        selected = pick(classes, "App ausschließen (aktuell offen)")
+        selected = pick(classes, "App ausschließen")
         if not selected: return
-
         excluded.append(selected)
         config["excluded_classes"] = excluded
         save_config(config)
@@ -107,10 +130,8 @@ def menu_exclusions(config):
         if not excluded:
             notify("ff9900", "  Ausschlussliste ist leer")
             return
-
         selected = pick(excluded, "Ausschluss aufheben")
         if not selected: return
-
         excluded.remove(selected)
         config["excluded_classes"] = excluded
         save_config(config)
@@ -123,13 +144,13 @@ def main():
     max_w  = config.get("max_windows", 5)
     excl   = config.get("excluded_classes", [])
 
-    mode_label = "Hide (Zustand erhalten)" if mode == "hide" else "Relaunch (App neu starten)"
+    mode_label = "Hide" if mode == "hide" else "Relaunch"
     mode_icon  = "󰈉" if mode == "hide" else "󰑓"
-    excl_label = f"{len(excl)} ausgeschlossen" if excl else "keine"
+    excl_label = ", ".join(excl[:3]) + ("…" if len(excl) > 3 else "") if excl else "keine"
 
     menu = [
         f"{mode_icon}  Modus: {mode_label}  →  wechseln",
-        f"  Max. Fenster: {max_w}  →  ändern",
+        f"  Max. Fenster: {max_w}  →  Zahl eingeben",
         f"  Ausschlussliste: {excl_label}  →  verwalten",
     ]
 
