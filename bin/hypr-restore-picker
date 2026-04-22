@@ -1,0 +1,89 @@
+#!/usr/bin/env python3
+# hypr-restore-picker
+# Shows a walker dmenu with all history entries to pick from.
+
+import json
+import os
+import subprocess
+import sys
+
+HISTORY_FILE = os.path.expanduser("~/.cache/hypr-window-history.json")
+
+
+def notify(color: str, msg: str) -> None:
+    subprocess.run(["hyprctl", "notify", "0", "3000", f"rgb({color})", msg])
+
+
+def main() -> None:
+    if not os.path.exists(HISTORY_FILE):
+        notify("ff9900", " No windows to restore")
+        return
+
+    try:
+        with open(HISTORY_FILE) as f:
+            history = json.load(f)
+    except Exception:
+        notify("ff5555", " Restore error: bad history file")
+        return
+
+    if not history:
+        notify("ff9900", " No windows to restore")
+        return
+
+    # Build display labels: "1. Teams (chromium)" etc.
+    labels = []
+    for i, entry in enumerate(history, 1):
+        window_class = entry.get("class", "unknown")
+        args = entry.get("args", [])
+        exe = os.path.basename(args[0]) if args else "?"
+        # Show app flag if present (e.g. --app=https://teams...)
+        app_url = next((a for a in args if a.startswith("--app=")), None)
+        if app_url:
+            label = f"{i}. {app_url.removeprefix('--app=https://').split('/')[0]}"
+        else:
+            label = f"{i}. {window_class}"
+        labels.append(label)
+
+    menu_input = "\n".join(labels)
+
+    # Show walker dmenu
+    result = subprocess.run(
+        ["walker", "--dmenu", "--placeholder", "Restore window"],
+        input=menu_input,
+        capture_output=True,
+        text=True
+    )
+
+    selected = result.stdout.strip()
+    if not selected:
+        return  # User cancelled
+
+    # Find which index was selected
+    try:
+        idx = int(selected.split(".")[0]) - 1
+        entry = history[idx]
+    except (ValueError, IndexError):
+        notify("ff5555", f" Could not match selection")
+        return
+
+    args = entry.get("args", [])
+    window_class = entry.get("class", "app")
+
+    if not args:
+        notify("ff5555", " Restore error: no command stored")
+        return
+
+    # Remove selected entry from history
+    history.pop(idx)
+    with open(HISTORY_FILE, "w") as f:
+        json.dump(history, f)
+
+    if args[0].startswith("omarchy-"):
+        subprocess.Popen(args)
+    else:
+        subprocess.Popen(["uwsm-app", "--"] + args)
+    notify("50fa7b", f" Restored: {window_class}")
+
+
+if __name__ == "__main__":
+    main()

@@ -1,0 +1,50 @@
+#!/usr/bin/env python3
+# hypr-restore-window
+# Re-launches the most recently closed window from history.
+
+import json
+import os
+import subprocess
+import sys
+
+HISTORY_FILE = os.path.expanduser("~/.cache/hypr-window-history.json")
+
+def notify(color: str, msg: str) -> None:
+    subprocess.run(["hyprctl", "notify", "0", "3000", f"rgb({color})", msg])
+
+def main() -> None:
+    if not os.path.exists(HISTORY_FILE):
+        notify("ff9900", " No windows to restore")
+        return
+
+    try:
+        with open(HISTORY_FILE) as f:
+            history = json.load(f)
+    except Exception:
+        notify("ff5555", " Restore error: bad history file")
+        return
+
+    if not history:
+        notify("ff9900", " No windows to restore")
+        return
+
+    entry = history.pop(0)
+    with open(HISTORY_FILE, "w") as f:
+        json.dump(history, f)
+
+    args = entry.get("args", [])
+    window_class = entry.get("class", "app")
+
+    if not args:
+        notify("ff5555", " Restore error: no command stored")
+        return
+
+    # Launch: omarchy-* commands run standalone, others via uwsm-app
+    if args[0].startswith("omarchy-"):
+        subprocess.Popen(args)
+    else:
+        subprocess.Popen(["uwsm-app", "--"] + args)
+    notify("50fa7b", f" Restored: {window_class}")
+
+if __name__ == "__main__":
+    main()

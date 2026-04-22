@@ -1,0 +1,49 @@
+#!/usr/bin/env python3
+# hypr-restore-all
+# Restores ALL windows in history (up to 5) at once.
+
+import json
+import os
+import subprocess
+
+HISTORY_FILE = os.path.expanduser("~/.cache/hypr-window-history.json")
+
+
+def notify(color: str, msg: str) -> None:
+    subprocess.run(["hyprctl", "notify", "0", "3000", f"rgb({color})", msg])
+
+
+def main() -> None:
+    if not os.path.exists(HISTORY_FILE):
+        notify("ff9900", " No windows to restore")
+        return
+
+    try:
+        with open(HISTORY_FILE) as f:
+            history = json.load(f)
+    except Exception:
+        notify("ff5555", " Restore error: bad history file")
+        return
+
+    if not history:
+        notify("ff9900", " No windows to restore")
+        return
+
+    count = len(history)
+    for entry in history:
+        args = entry.get("args", [])
+        if args:
+            if args[0].startswith("omarchy-"):
+                subprocess.Popen(args)
+            else:
+                subprocess.Popen(["uwsm-app", "--"] + args)
+
+    # Clear history
+    with open(HISTORY_FILE, "w") as f:
+        json.dump([], f)
+
+    notify("50fa7b", f" Restored {count} window{'s' if count != 1 else ''}")
+
+
+if __name__ == "__main__":
+    main()
