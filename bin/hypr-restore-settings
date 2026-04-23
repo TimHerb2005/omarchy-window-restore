@@ -248,44 +248,164 @@ def menu_ws(config):
         notify("ff5555", f"  Invalid: '{raw}' is not a number")
 
 
-def main():
-    mode   = get_mode()
-    config = get_config()
-    max_w  = config.get("max_windows", 5)
-    excl   = config.get("excluded_classes", [])
-    pause  = config.get("pause_on_close", True)
-    hide_ws = config.get("hide_workspace", 99)
+def menu_bugreport(config):
+    import datetime
+    now = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M")
+    downloads = os.path.expanduser("~/Downloads")
+    os.makedirs(downloads, exist_ok=True)
+    filepath = os.path.join(downloads, f"window-restore-bugreport-{now}.txt")
 
-    mode_label  = "Hide" if mode == "hide" else "Relaunch"
-    mode_icon   = "󰈉" if mode == "hide" else "󰑓"
-    excl_count  = len(excl)
-    pause_label = "On" if pause else "Off"
-    notif_label = "On" if config.get("notifications_enabled", True) else "Off"
+    # Package version
+    try:
+        r = subprocess.run(["pacman", "-Q", "omarchy-window-restore-git"],
+                           capture_output=True, text=True)
+        pkg_ver = r.stdout.strip() or "unknown"
+    except:
+        pkg_ver = "unknown"
 
-    menu = [
-        f"{mode_icon}  Mode: {mode_label}  →  switch",
-        f"  Max windows: {max_w}  →  enter number",
-        f"  Exclusion list ({excl_count})  →  manage",
-        f"  Pause media on close: {pause_label}  →  toggle",
-        f"  Notifications: {notif_label}  →  toggle",
-        f"  Hide workspace: {hide_ws}  →  enter number",
+    # Omarchy version
+    try:
+        r = subprocess.run(["omarchy-version"], capture_output=True, text=True)
+        omarchy_ver = r.stdout.strip() or "unknown"
+    except:
+        omarchy_ver = "unknown"
+
+    # Hyprland version (first line only)
+    try:
+        r = subprocess.run(["hyprctl", "version"], capture_output=True, text=True)
+        first = r.stdout.splitlines()[0] if r.stdout else "unknown"
+        # Extract just "Hyprland X.Y.Z" from the verbose line
+        import re as _re
+        m = _re.search(r"Hyprland\s+v?[\d.]+", first)
+        hypr_ver = m.group(0) if m else first
+    except:
+        hypr_ver = "unknown"
+
+    # History — only class names, no args/URLs
+    history = load_json(HISTORY_FILE)
+    history_classes = [e.get("class", "?") for e in history]
+
+    # Hidden — only class names
+    hidden = load_json(HIDDEN_FILE)
+    hidden_classes = [e.get("class", "?") for e in hidden]
+
+    # Active Window Restore keybindings
+    try:
+        r = subprocess.run(["hyprctl", "-j", "binds"], capture_output=True, text=True)
+        binds = json.loads(r.stdout)
+        wr_binds = [b for b in binds if any(
+            kw in b.get("description", "") for kw in
+            ["Restore", "Close window", "Pick window", "permanently", "Window Restore"]
+        ) and "notification" not in b.get("description", "").lower()]
+        MOD_MAP = {64: "SUPER", 65: "SUPER SHIFT", 68: "SUPER CTRL",
+                   72: "SUPER ALT", 73: "SUPER SHIFT ALT"}
+        bind_lines = [
+            f"  {MOD_MAP.get(b['modmask'], str(b['modmask']))} + {b['key'].upper()}"
+            f" → {b['description']}"
+            for b in wr_binds
+        ]
+    except:
+        bind_lines = ["  (could not read bindings)"]
+
+    mode = get_mode()
+    lines = [
+        "omarchy-window-restore Bug Report",
+        f"Generated: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M')}",
+        "Issues: https://github.com/TimHerb2005/omarchy-window-restore/issues/new",
+        "",
+        "### Package",
+        pkg_ver,
+        "",
+        "### System",
+        f"Omarchy: {omarchy_ver}",
+        f"Hyprland: {hypr_ver}",
+        "",
+        "### Config",
+        f"max_windows:          {config.get('max_windows', '?')}",
+        f"excluded_classes:     {config.get('excluded_classes', [])}",
+        f"pause_on_close:       {config.get('pause_on_close', '?')}",
+        f"notifications_enabled:{config.get('notifications_enabled', '?')}",
+        f"hide_workspace:       {config.get('hide_workspace', '?')}",
+        "",
+        "### Mode",
+        mode,
+        "",
+        f"### History ({len(history)} entries — app names only, no URLs or file paths)",
+        *(([f"  - {c}" for c in history_classes]) if history_classes else ["  (empty)"]),
+        "",
+        f"### Hidden windows ({len(hidden)} entries)",
+        *(([f"  - {c}" for c in hidden_classes]) if hidden_classes else ["  (empty)"]),
+        "",
+        "### Active Window Restore keybindings",
+        *bind_lines,
+        "",
+        "---",
+        "Note: This report contains no URLs, window titles, or personal data.",
     ]
 
-    selected = pick(menu, "Window Restore Settings")
-    if not selected: return
+    with open(filepath, "w") as f:
+        f.write("\n".join(lines) + "\n")
 
-    if "Mode" in selected:
-        menu_mode(mode)
-    elif "Max" in selected:
-        menu_max(config)
-    elif "Exclusion" in selected:
-        menu_exclusions(config)
-    elif "Pause" in selected:
-        menu_pause(config)
-    elif "Notifications" in selected:
-        menu_notify(config)
-    elif "workspace" in selected:
-        menu_ws(config)
+    notify("50fa7b", f"🐛 Bug report saved to ~/Downloads/{os.path.basename(filepath)}")
+
+
+def menu_settings(config):
+    """Sub-menu with all configurable settings. Loops until ESC (goes back to main)."""
+    while True:
+        # Re-read config each iteration so values refresh after a change
+        config = get_config()
+        max_w   = config.get("max_windows", 5)
+        excl    = config.get("excluded_classes", [])
+        pause   = config.get("pause_on_close", True)
+        hide_ws = config.get("hide_workspace", 99)
+        notif   = config.get("notifications_enabled", True)
+
+        menu = [
+            f"  Max windows: {max_w}",
+            f"  Exclusions: {len(excl)}",
+            f"  Pause on close: {'On' if pause else 'Off'}",
+            f"  Notifications: {'On' if notif else 'Off'}",
+            f"  Hide workspace: {hide_ws}",
+        ]
+
+        selected = pick(menu, "Settings  (ESC → back)")
+        if not selected: return  # ESC → back to main menu
+
+        if "Max" in selected:
+            menu_max(config)
+        elif "Exclusions" in selected:
+            menu_exclusions(config)
+        elif "Pause" in selected:
+            menu_pause(config)
+        elif "Notifications" in selected:
+            menu_notify(config)
+        elif "workspace" in selected:
+            menu_ws(config)
+
+
+def main():
+    while True:
+        mode   = get_mode()
+        config = get_config()
+
+        mode_label = "Hide" if mode == "hide" else "Relaunch"
+        mode_icon  = "󰈉" if mode == "hide" else "󰑓"
+
+        menu = [
+            f"{mode_icon}  Mode: {mode_label}",
+            f"⚙  Settings",
+            f"🐛  Create bug report",
+        ]
+
+        selected = pick(menu, "Window Restore")
+        if not selected: return  # ESC → close
+
+        if "Mode" in selected:
+            menu_mode(mode)
+        elif "Settings" in selected:
+            menu_settings(config)
+        elif "bug report" in selected:
+            menu_bugreport(config)
 
 
 if __name__ == "__main__":
