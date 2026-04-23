@@ -349,38 +349,28 @@ def menu_bugreport(config):
     notify("50fa7b", f"🐛 Bug report saved to ~/Downloads/{os.path.basename(filepath)}")
 
 
-def main():
-    mode   = get_mode()
-    config = get_config()
-    max_w  = config.get("max_windows", 5)
-    excl   = config.get("excluded_classes", [])
-    pause  = config.get("pause_on_close", True)
+def menu_settings(config):
+    """Sub-menu with all configurable settings."""
+    max_w   = config.get("max_windows", 5)
+    excl    = config.get("excluded_classes", [])
+    pause   = config.get("pause_on_close", True)
     hide_ws = config.get("hide_workspace", 99)
-
-    mode_label  = "Hide" if mode == "hide" else "Relaunch"
-    mode_icon   = "󰈉" if mode == "hide" else "󰑓"
-    excl_count  = len(excl)
-    pause_label = "On" if pause else "Off"
-    notif_label = "On" if config.get("notifications_enabled", True) else "Off"
+    notif   = config.get("notifications_enabled", True)
 
     menu = [
-        f"{mode_icon}  Mode: {mode_label}  →  switch",
-        f"  Max windows: {max_w}  →  enter number",
-        f"  Exclusion list ({excl_count})  →  manage",
-        f"  Pause media on close: {pause_label}  →  toggle",
-        f"  Notifications: {notif_label}  →  toggle",
-        f"  Hide workspace: {hide_ws}  →  enter number",
-        f"🐛  Create bug report  →  saves to ~/Downloads/",
+        f"  Max windows: {max_w}",
+        f"  Exclusions: {len(excl)}",
+        f"  Pause on close: {'On' if pause else 'Off'}",
+        f"  Notifications: {'On' if notif else 'Off'}",
+        f"  Hide workspace: {hide_ws}",
     ]
 
-    selected = pick(menu, "Window Restore Settings")
+    selected = pick(menu, "Settings")
     if not selected: return
 
-    if "Mode" in selected:
-        menu_mode(mode)
-    elif "Max" in selected:
+    if "Max" in selected:
         menu_max(config)
-    elif "Exclusion" in selected:
+    elif "Exclusions" in selected:
         menu_exclusions(config)
     elif "Pause" in selected:
         menu_pause(config)
@@ -388,6 +378,28 @@ def main():
         menu_notify(config)
     elif "workspace" in selected:
         menu_ws(config)
+
+
+def main():
+    mode   = get_mode()
+    config = get_config()
+
+    mode_label = "Hide" if mode == "hide" else "Relaunch"
+    mode_icon  = "󰈉" if mode == "hide" else "󰑓"
+
+    menu = [
+        f"{mode_icon}  Mode: {mode_label}",
+        f"⚙  Settings",
+        f"🐛  Create bug report",
+    ]
+
+    selected = pick(menu, "Window Restore")
+    if not selected: return
+
+    if "Mode" in selected:
+        menu_mode(mode)
+    elif "Settings" in selected:
+        menu_settings(config)
     elif "bug report" in selected:
         menu_bugreport(config)
 
