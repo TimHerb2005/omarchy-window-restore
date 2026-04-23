@@ -72,6 +72,17 @@ def get_launch_args(window_class, pid):
         parts = [p.decode("utf-8", errors="replace") for p in raw.split(b"\x00") if p]
         if len(parts) == 1 and " " in parts[0]: parts = shlex.split(parts[0])
         if "--type=" in " ".join(parts): return None
+        # AppImages mount to /tmp/.mount_* — use $APPIMAGE env var for the real path
+        if parts and parts[0].startswith("/tmp/.mount_"):
+            with open(f"/proc/{pid}/environ", "rb") as f: env_raw = f.read()
+            env = dict(
+                e.split(b"=", 1) for e in env_raw.split(b"\x00")
+                if b"=" in e
+            )
+            appimage_path = env.get(b"APPIMAGE", b"").decode("utf-8", errors="replace")
+            if appimage_path:
+                return [appimage_path]
+            return None  # AppImage but no $APPIMAGE var — skip
         return parts or None
     except: return None
 
