@@ -276,7 +276,7 @@ def menu_bugreport(config):
         first = r.stdout.splitlines()[0] if r.stdout else "unknown"
         # Extract just "Hyprland X.Y.Z" from the verbose line
         import re as _re
-        m = _re.search(r"Hyprland\s+[\d.]+", first)
+        m = _re.search(r"Hyprland\s+v?[\d.]+", first)
         hypr_ver = m.group(0) if m else first
     except:
         hypr_ver = "unknown"

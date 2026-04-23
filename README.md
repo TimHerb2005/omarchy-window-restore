@@ -19,7 +19,7 @@ All keybindings are automatically listed in Omarchy's built-in keybinding menu (
 | `SUPER+R` | Restore the last closed window |
 | `SUPER+SHIFT+R` | Restore **all** closed windows at once |
 | `SUPER+ALT+R` | Open a **picker menu** to choose which window to restore |
-| `SUPER+CTRL+R` | Open **Settings** (mode, max windows, exclusions, workspace) |
+| `SUPER+CTRL+R` | Open **Settings menu** (mode, max windows, exclusions, workspace, bug report) |
 
 ## Restore Modes
 
@@ -43,14 +43,25 @@ Switch between modes anytime via `SUPER+CTRL+R → Mode → switch`.
 
 ## Settings Menu (`SUPER+CTRL+R`)
 
-| Option | Description |
+The settings menu has three items:
+
+| Item | Description |
 |---|---|
 | **Mode** | Toggle between Relaunch and Hide mode |
+| **⚙ Settings** | Open sub-menu with all configuration options |
+| **🐛 Create bug report** | Generate a bug report file in `~/Downloads/` |
+
+### ⚙ Settings sub-menu
+
+| Option | Description |
+|---|---|
 | **Max windows** | Set how many windows are kept in history (default: 5, min: 1) |
 | **Exclusion list** | Exclude specific apps from history (e.g. terminals) |
 | **Pause media on close** | Pause media players when a window is closed/hidden (default: on) |
 | **Notifications** | Enable or disable desktop notifications (default: on) |
 | **Hide workspace** | The workspace number used to hide windows in Hide mode (default: 99) |
+
+Navigate back with `ESC` at any menu level.
 
 ### Exclusion List
 
