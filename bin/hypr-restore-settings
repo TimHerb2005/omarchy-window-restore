@@ -248,6 +248,107 @@ def menu_ws(config):
         notify("ff5555", f"  Invalid: '{raw}' is not a number")
 
 
+def menu_bugreport(config):
+    import datetime
+    now = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M")
+    downloads = os.path.expanduser("~/Downloads")
+    os.makedirs(downloads, exist_ok=True)
+    filepath = os.path.join(downloads, f"window-restore-bugreport-{now}.txt")
+
+    # Package version
+    try:
+        r = subprocess.run(["pacman", "-Q", "omarchy-window-restore-git"],
+                           capture_output=True, text=True)
+        pkg_ver = r.stdout.strip() or "unknown"
+    except:
+        pkg_ver = "unknown"
+
+    # Omarchy version
+    try:
+        r = subprocess.run(["omarchy-version"], capture_output=True, text=True)
+        omarchy_ver = r.stdout.strip() or "unknown"
+    except:
+        omarchy_ver = "unknown"
+
+    # Hyprland version (first line only)
+    try:
+        r = subprocess.run(["hyprctl", "version"], capture_output=True, text=True)
+        first = r.stdout.splitlines()[0] if r.stdout else "unknown"
+        # Extract just "Hyprland X.Y.Z" from the verbose line
+        import re as _re
+        m = _re.search(r"Hyprland\s+[\d.]+", first)
+        hypr_ver = m.group(0) if m else first
+    except:
+        hypr_ver = "unknown"
+
+    # History — only class names, no args/URLs
+    history = load_json(HISTORY_FILE)
+    history_classes = [e.get("class", "?") for e in history]
+
+    # Hidden — only class names
+    hidden = load_json(HIDDEN_FILE)
+    hidden_classes = [e.get("class", "?") for e in hidden]
+
+    # Active Window Restore keybindings
+    try:
+        r = subprocess.run(["hyprctl", "-j", "binds"], capture_output=True, text=True)
+        binds = json.loads(r.stdout)
+        wr_binds = [b for b in binds if any(
+            kw in b.get("description", "") for kw in
+            ["Restore", "Close window", "Pick window", "permanently", "Window Restore"]
+        ) and "notification" not in b.get("description", "").lower()]
+        MOD_MAP = {64: "SUPER", 65: "SUPER SHIFT", 68: "SUPER CTRL",
+                   72: "SUPER ALT", 73: "SUPER SHIFT ALT"}
+        bind_lines = [
+            f"  {MOD_MAP.get(b['modmask'], str(b['modmask']))} + {b['key'].upper()}"
+            f" → {b['description']}"
+            for b in wr_binds
+        ]
+    except:
+        bind_lines = ["  (could not read bindings)"]
+
+    mode = get_mode()
+    lines = [
+        "omarchy-window-restore Bug Report",
+        f"Generated: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M')}",
+        "Issues: https://github.com/TimHerb2005/omarchy-window-restore/issues/new",
+        "",
+        "### Package",
+        pkg_ver,
+        "",
+        "### System",
+        f"Omarchy: {omarchy_ver}",
+        f"Hyprland: {hypr_ver}",
+        "",
+        "### Config",
+        f"max_windows:          {config.get('max_windows', '?')}",
+        f"excluded_classes:     {config.get('excluded_classes', [])}",
+        f"pause_on_close:       {config.get('pause_on_close', '?')}",
+        f"notifications_enabled:{config.get('notifications_enabled', '?')}",
+        f"hide_workspace:       {config.get('hide_workspace', '?')}",
+        "",
+        "### Mode",
+        mode,
+        "",
+        f"### History ({len(history)} entries — app names only, no URLs or file paths)",
+        *(([f"  - {c}" for c in history_classes]) if history_classes else ["  (empty)"]),
+        "",
+        f"### Hidden windows ({len(hidden)} entries)",
+        *(([f"  - {c}" for c in hidden_classes]) if hidden_classes else ["  (empty)"]),
+        "",
+        "### Active Window Restore keybindings",
+        *bind_lines,
+        "",
+        "---",
+        "Note: This report contains no URLs, window titles, or personal data.",
+    ]
+
+    with open(filepath, "w") as f:
+        f.write("\n".join(lines) + "\n")
+
+    notify("50fa7b", f"🐛 Bug report saved to ~/Downloads/{os.path.basename(filepath)}")
+
+
 def main():
     mode   = get_mode()
     config = get_config()
@@ -269,6 +370,7 @@ def main():
         f"  Pause media on close: {pause_label}  →  toggle",
         f"  Notifications: {notif_label}  →  toggle",
         f"  Hide workspace: {hide_ws}  →  enter number",
+        f"🐛  Create bug report  →  saves to ~/Downloads/",
     ]
 
     selected = pick(menu, "Window Restore Settings")
@@ -286,6 +388,8 @@ def main():
         menu_notify(config)
     elif "workspace" in selected:
         menu_ws(config)
+    elif "bug report" in selected:
+        menu_bugreport(config)
 
 
 if __name__ == "__main__":
