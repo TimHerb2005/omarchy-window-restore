@@ -8,6 +8,8 @@ Works for **all apps**: browser windows, PWAs (Teams, ChatGPT, etc.), terminals,
 
 ![Demo](https://github.com/TimHerb2005/omarchy-window-restore/releases/download/v1.4.0/demo.gif)
 
+📖 **[Full documentation in the Wiki](https://github.com/TimHerb2005/omarchy-window-restore/wiki)** — Troubleshooting · App Compatibility · FAQ · Code Docs
+
 ## Keybindings
 
 All keybindings are automatically listed in Omarchy's built-in keybinding menu (`SUPER+K`).
