@@ -33,7 +33,7 @@ bindd = SUPER, W, Close window (restorable via SUPER+R), exec, python3 ~/.local/
 bindd = SUPER, R, Restore last closed window, exec, python3 ~/.local/bin/hypr-restore-window
 bindd = SUPER SHIFT, R, Restore all closed windows, exec, python3 ~/.local/bin/hypr-restore-all
 bindd = SUPER ALT, R, Pick window to restore (menu), exec, python3 ~/.local/bin/hypr-restore-picker
-bindd = SUPER, D, Window Restore settings, exec, python3 ~/.local/bin/hypr-restore-settings
+bindd = SUPER SHIFT ALT, R, Window Restore settings, exec, python3 ~/.local/bin/hypr-restore-settings
 bindd = SUPER ALT, W, Close window permanently (no history), killactive,
 BINDINGS
   echo "  ✓ Keybindings added to $BINDINGS_FILE"
@@ -54,4 +54,4 @@ echo "  SUPER+ALT+W       → Close window permanently (no history)"
 echo "  SUPER+R           → Restore last closed window"
 echo "  SUPER+SHIFT+R     → Restore all closed windows"
 echo "  SUPER+ALT+R       → Pick window to restore (menu)"
-echo "  SUPER+D → Settings menu (mode, max windows, exclusions, pause, notifications, workspace, bug report)"
+echo "  SUPER+SHIFT+ALT+R → Settings menu (mode, max windows, exclusions, pause, notifications, workspace, bug report)"
