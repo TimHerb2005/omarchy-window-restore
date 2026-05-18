@@ -397,7 +397,7 @@ def main():
             f"🐛  Create bug report",
         ]
 
-        selected = pick(menu, "Window Restore")
+        selected = pick(menu, "⚙ Window Restore Settings")
         if not selected: return  # ESC → close
 
         if "Mode" in selected:
