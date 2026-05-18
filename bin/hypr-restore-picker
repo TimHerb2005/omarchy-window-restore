@@ -43,10 +43,10 @@ def launch(args):
 
 def show_picker(entries, label_fn):
     labels = [f"{i+1}. {label_fn(e)}" for i, e in enumerate(entries)]
-    result = subprocess.run(
-        ["walker", "--dmenu", "--placeholder", "Restore window"],
-        input="\n".join(labels), capture_output=True, text=True
-    )
+    import shlex
+    items_str = shlex.quote("\n".join(labels))
+    cmd = f"printf %b {items_str} | omarchy-launch-walker --dmenu --width 295 --minheight 1 --maxheight 630 -p 'Restore window…' 2>/dev/null"
+    result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
     selected = result.stdout.strip()
     if not selected:
         return None

@@ -44,19 +44,20 @@ def save_config(cfg):
 
 def pick(items, placeholder):
     """Show a walker dmenu with predefined options."""
-    result = subprocess.run(
-        ["walker", "--dmenu", "--placeholder", placeholder],
-        input="\n".join(items), capture_output=True, text=True
-    )
+    import shlex
+    items_str = shlex.quote("\n".join(items))
+    ph_str = shlex.quote(placeholder + "…")
+    cmd = f"printf %b {items_str} | omarchy-launch-walker --dmenu --width 295 --minheight 1 --maxheight 300 -p {ph_str} 2>/dev/null"
+    result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
     return result.stdout.strip()
 
 
 def input_text(placeholder):
     """Show a walker freeform text input."""
-    result = subprocess.run(
-        ["walker", "--dmenu", "--inputonly", "--placeholder", placeholder],
-        input="", capture_output=True, text=True
-    )
+    import shlex
+    ph_str = shlex.quote(placeholder + "…")
+    cmd = f"omarchy-launch-walker --dmenu --inputonly --width 295 --minheight 1 --maxheight 1 -p {ph_str} 2>/dev/null"
+    result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
     return result.stdout.strip()
 
 
@@ -249,7 +250,6 @@ def menu_ws(config):
 
 
 def menu_bugreport(config):
-    import datetime
     now = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M")
     downloads = os.path.expanduser("~/Downloads")
     os.makedirs(downloads, exist_ok=True)
