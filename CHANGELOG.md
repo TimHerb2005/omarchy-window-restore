@@ -5,10 +5,10 @@ All notable changes to this project will be documented in this file.
 ## [v1.10.0] – 2026-05-18
 
 ### Fixed
-- **Keybinding conflict**: `SUPER+CTRL+R` is now used by Omarchy's reminder feature since a recent Omarchy update. The Window Restore settings keybinding has been moved to `SUPER+SHIFT+ALT+R` to resolve the conflict.
+- **Keybinding conflict**: `SUPER+CTRL+R` is now used by Omarchy's reminder feature since a recent Omarchy update. The Window Restore settings keybinding has been moved to `SUPER+D` to resolve the conflict.
 
 ### Changed
-- Settings keybinding: `SUPER+CTRL+R` → `SUPER+SHIFT+ALT+R`
+- Settings keybinding: `SUPER+CTRL+R` → `SUPER+D`
 - Updated all references in README, install scripts, wiki and issue templates
 
 ### Upgrade notes
@@ -29,7 +29,7 @@ bindd = SUPER SHIFT ALT, R, Window Restore settings, ...
 ## [v1.9.0] – 2026-04-23
 
 ### Added
-- **Built-in Bug Reporter** (`SUPER+SHIFT+ALT+R` → 🐛 Create bug report): generates a privacy-safe report file in `~/Downloads/` with package/system versions, config, and window class names (no URLs or personal data)
+- **Built-in Bug Reporter** (`SUPER+D` → 🐛 Create bug report): generates a privacy-safe report file in `~/Downloads/` with package/system versions, config, and window class names (no URLs or personal data)
 - **Compact Settings Menu**: 7-item flat list replaced with a 3-item main menu (Mode / ⚙ Settings / 🐛 Bug report) plus a Settings sub-menu
 - **ESC Navigation**: ESC in sub-menu goes back one level; ESC in main menu closes
 
@@ -62,8 +62,8 @@ bindd = SUPER SHIFT ALT, R, Window Restore settings, ...
 
 ### Added
 - **Exclusion list**: exclude specific apps from history (added/removed via Settings menu)
-- **``SUPER+ALT+P` | Picker menu: walker dmenu to choose which window to restore
-- **`SUPER+CTRL+R`** settings menu (replaced by `SUPER+SHIFT+ALT+R` in v1.10.0)
+- **``SUPER+ALT+R` | Picker menu: walker dmenu to choose which window to restore
+- **`SUPER+CTRL+R`** settings menu (replaced by `SUPER+D` in v1.10.0)
 - btop excluded by default (`org.omarchy.btop`)
 
 ---

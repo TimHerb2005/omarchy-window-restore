@@ -20,8 +20,8 @@ All keybindings are automatically listed in Omarchy's built-in keybinding menu (
 | `SUPER+ALT+W` | Close window **permanently** *(no history, cannot be restored)* |
 | `SUPER+R` | Restore the last closed window |
 | `SUPER+SHIFT+R` | Restore **all** closed windows at once |
-| `SUPER+ALT+P` | Pick window to restore from a **menu** |
-| `SUPER+SHIFT+ALT+R` | Open **Settings menu** (mode, max windows, exclusions, workspace, bug report) |
+| `SUPER+ALT+R` | Pick window to restore from a **menu** |
+| `SUPER+D | Settings menu** (mode, max windows, exclusions, workspace, bug report) |
 
 ## Restore Modes
 
@@ -43,7 +43,7 @@ Switch between modes anytime via `SUPER+SHIFT+ALT+R → Mode → switch`.
 
 > **Note:** Switching from Hide → Relaunch mode will close all currently hidden windows.
 
-## Settings Menu (`SUPER+SHIFT+ALT+R`)
+## Settings Menu (`SUPER+D`)
 
 The settings menu has three items:
 
@@ -166,8 +166,8 @@ Removes all scripts, keybindings and the history cache. `SUPER+W` returns to its
 ├── hypr-close-window           # SUPER+W: save to history/hide, then close
 ├── hypr-restore-window         # SUPER+R: restore last window
 ├── hypr-restore-all            # SUPER+SHIFT+R: restore all windows
-├── hypr-restore-picker         # SUPER+ALT+P: pick window to restore (menu)
-└── hypr-restore-settings       # SUPER+SHIFT+ALT+R: settings menu
+├── hypr-restore-picker         # SUPER+ALT+R: pick window to restore (menu)
+└── hypr-restore-settings       # SUPER+D | Settings menu
 
 ~/.cache/
 ├── hypr-window-history.json    # Relaunch mode history (max N entries)
