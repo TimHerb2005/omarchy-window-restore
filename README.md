@@ -20,7 +20,7 @@ All keybindings are automatically listed in Omarchy's built-in keybinding menu (
 | `SUPER+ALT+W` | Close window **permanently** *(no history, cannot be restored)* |
 | `SUPER+R` | Restore the last closed window |
 | `SUPER+SHIFT+R` | Restore **all** closed windows at once |
-| `SUPER+ALT+R` | Open a **picker menu** to choose which window to restore |
+| `SUPER+ALT+P` | Pick window to restore from a **menu** |
 | `SUPER+SHIFT+ALT+R` | Open **Settings menu** (mode, max windows, exclusions, workspace, bug report) |
 
 ## Restore Modes
@@ -166,7 +166,7 @@ Removes all scripts, keybindings and the history cache. `SUPER+W` returns to its
 ├── hypr-close-window           # SUPER+W: save to history/hide, then close
 ├── hypr-restore-window         # SUPER+R: restore last window
 ├── hypr-restore-all            # SUPER+SHIFT+R: restore all windows
-├── hypr-restore-picker         # SUPER+ALT+R: walker picker menu
+├── hypr-restore-picker         # SUPER+ALT+P: pick window to restore (menu)
 └── hypr-restore-settings       # SUPER+SHIFT+ALT+R: settings menu
 
 ~/.cache/

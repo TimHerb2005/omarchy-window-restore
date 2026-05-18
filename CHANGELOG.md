@@ -62,7 +62,7 @@ bindd = SUPER SHIFT ALT, R, Window Restore settings, ...
 
 ### Added
 - **Exclusion list**: exclude specific apps from history (added/removed via Settings menu)
-- **`SUPER+ALT+R`** picker menu: walker dmenu to choose which window to restore
+- **``SUPER+ALT+P` | Picker menu: walker dmenu to choose which window to restore
 - **`SUPER+CTRL+R`** settings menu (replaced by `SUPER+SHIFT+ALT+R` in v1.10.0)
 - btop excluded by default (`org.omarchy.btop`)
 
