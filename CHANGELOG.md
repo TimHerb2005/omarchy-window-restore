@@ -2,6 +2,26 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v1.11.0] – 2026-05-18
+
+### Fixed
+- **Walker dmenu items not showing**: Walker 2.x runs as a GApplication daemon and does not receive stdin from Python's `subprocess.run(input=...)`. All walker dmenu calls now use a shell pipe with `omarchy-launch-walker` — the same approach used by Omarchy's own menu scripts. This caused every menu (settings and picker) to show only an empty search field.
+- **Settings keybinding**: Finalized to `SUPER+D` — all previous attempts (`SUPER+CTRL+R`, `SUPER+SHIFT+ALT+R`, `SUPER+CTRL+D`) caused conflicts with Omarchy keybindings or Hyprland modifier subset-matching behaviour.
+
+### Changed
+- `hypr-restore-settings`: `pick()` and `input_text()` now use shell pipe with `omarchy-launch-walker`
+- `hypr-restore-picker`: `show_picker()` now uses shell pipe with `omarchy-launch-walker`
+- Settings keybinding settled on `SUPER+D`
+- Picker keybinding stays on `SUPER+ALT+R`
+
+### Upgrade notes
+Re-run the installer to update keybindings and scripts:
+```bash
+omarchy-install-window-restore
+```
+
+---
+
 ## [v1.10.0] – 2026-05-18
 
 ### Fixed
