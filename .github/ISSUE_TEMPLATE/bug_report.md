@@ -15,7 +15,7 @@ What you expected to happen.
 
 **Environment**
 
-> 💡 Tip: Press `SUPER+CTRL+R` → **🐛 Create bug report** to auto-generate a report file with all system info.
+> 💡 Tip: Press `SUPER+SHIFT+ALT+R` → **🐛 Create bug report** to auto-generate a report file with all system info.
 > Attach the generated file from `~/Downloads/` to this issue.
 
 If you prefer to fill in manually:
