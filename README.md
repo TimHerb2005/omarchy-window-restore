@@ -21,11 +21,11 @@ All keybindings are automatically listed in Omarchy's built-in keybinding menu (
 | `SUPER+R` | Restore the last closed window |
 | `SUPER+SHIFT+R` | Restore **all** closed windows at once |
 | `SUPER+ALT+R` | Pick window to restore from a **menu** |
-| `SUPER+D | Settings menu** (mode, max windows, exclusions, workspace, bug report) |
+| `SUPER+D` | **Settings menu** (mode, max windows, exclusions, workspace, bug report) |
 
 ## Restore Modes
 
-Switch between modes anytime via `SUPER+SHIFT+ALT+R → Mode → switch`.
+Switch between modes anytime via `SUPER+D` → **Mode**.
 
 ### Relaunch Mode *(default)*
 `SUPER+W` kills the window and saves the launch command. `SUPER+R` restarts the app fresh.
@@ -71,7 +71,7 @@ Apps on the exclusion list are closed normally but **not saved to history**. Use
 
 `org.omarchy.btop` (the system monitor) is excluded by default.
 
-To add an app, open `SUPER+SHIFT+ALT+R → Exclusion list` and either:
+To add an app, open `SUPER+D` → **⚙ Settings** → **Exclusion list** and either:
 - **Pick from open windows** — select any currently open app
 - **Enter app ID manually** — type the window class directly
 
@@ -167,7 +167,7 @@ Removes all scripts, keybindings and the history cache. `SUPER+W` returns to its
 ├── hypr-restore-window         # SUPER+R: restore last window
 ├── hypr-restore-all            # SUPER+SHIFT+R: restore all windows
 ├── hypr-restore-picker         # SUPER+ALT+R: pick window to restore (menu)
-└── hypr-restore-settings       # SUPER+D | Settings menu
+└── hypr-restore-settings       # SUPER+D: settings menu
 
 ~/.cache/
 ├── hypr-window-history.json    # Relaunch mode history (max N entries)
