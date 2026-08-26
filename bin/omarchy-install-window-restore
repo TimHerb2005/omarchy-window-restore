@@ -7,12 +7,23 @@ set -e
 
 SRC="/usr/share/omarchy-window-restore-git/bin"
 BIN_DIR="$HOME/.local/bin"
-BINDINGS_FILE="$HOME/.config/hypr/bindings.conf"
 CONFIG_FILE="$HOME/.cache/hypr-restore-config.json"
 HOOK_DIR="/etc/pacman.d/hooks"
 HOOK_FILE="$HOOK_DIR/omarchy-window-restore-remove.hook"
-MARKER="# Window Restore"
 CURRENT_USER="$USER"
+
+# Omarchy "Quattro" (Hyprland 0.56+) switched Hyprland config to native Lua.
+# When ~/.config/hypr/hyprland.lua exists, Hyprland loads it instead of
+# hyprland.conf, so bindings must go there, in Lua syntax.
+if [ -f "$HOME/.config/hypr/hyprland.lua" ]; then
+  LUA_MODE=1
+  BINDINGS_FILE="$HOME/.config/hypr/bindings.lua"
+  MARKER="-- Window Restore"
+else
+  LUA_MODE=0
+  BINDINGS_FILE="$HOME/.config/hypr/bindings.conf"
+  MARKER="# Window Restore"
+fi
 
 echo "Activating Omarchy Window Restore..."
 
@@ -26,6 +37,20 @@ echo "  ✓ Scripts installed to $BIN_DIR"
 # Add keybindings (idempotent)
 if grep -q "$MARKER" "$BINDINGS_FILE" 2>/dev/null; then
   echo "  ✓ Keybindings already present, skipping"
+elif [ "$LUA_MODE" = "1" ]; then
+  cat >> "$BINDINGS_FILE" << 'BINDINGS'
+
+-- Window Restore: SUPER+W saves to history and closes, SUPER+R restores last window
+hl.unbind("SUPER + W")
+o.bind("SUPER + W", "Close window (restorable via SUPER+R)", "python3 ~/.local/bin/hypr-close-window")
+o.bind("SUPER + D", "Window Restore settings", "python3 ~/.local/bin/hypr-restore-settings")
+o.bind("SUPER + ALT + R", "Pick window to restore (menu)", "python3 ~/.local/bin/hypr-restore-picker")
+o.bind("SUPER + SHIFT + R", "Restore all closed windows", "python3 ~/.local/bin/hypr-restore-all")
+o.bind("SUPER + R", "Restore last closed window", "python3 ~/.local/bin/hypr-restore-window")
+hl.unbind("SUPER + ALT + W")
+o.bind("SUPER + ALT + W", "Close window permanently (no history)", "hyprctl dispatch \"hl.dsp.window.close()\"")
+BINDINGS
+  echo "  ✓ Keybindings added to $BINDINGS_FILE (Lua)"
 else
   cat >> "$BINDINGS_FILE" << 'BINDINGS'
 

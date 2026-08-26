@@ -70,7 +70,7 @@ def main():
         save_json(HIDDEN_FILE, hidden)
         addr = entry.get("address", "")
         if addr:
-            subprocess.run(["hyprctl", "dispatch", "movetoworkspace", f"e+0,address:{addr}"])
+            subprocess.run(["hyprctl", "dispatch", f"hl.dsp.window.move({{ workspace = 'e+0', window = 'address:{addr}' }})"])
             notify("50fa7b", f" Restored: {entry.get('class', 'app')}")
     else:
         history = load_json(HISTORY_FILE)

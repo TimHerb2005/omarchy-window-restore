@@ -6,7 +6,6 @@
 set -e
 
 BIN_DIR="$HOME/.local/bin"
-BINDINGS_FILE="$HOME/.config/hypr/bindings.conf"
 HOOK_FILE="/etc/pacman.d/hooks/omarchy-window-restore-remove.hook"
 
 echo "Deactivating Omarchy Window Restore..."
@@ -17,12 +16,15 @@ for script in hypr-close-window hypr-restore-window hypr-restore-all hypr-restor
 done
 echo "  ✓ Scripts removed"
 
-# Remove keybindings block
-if grep -q "# Window Restore" "$BINDINGS_FILE" 2>/dev/null; then
-  python3 - "$BINDINGS_FILE" << 'EOF'
+# Remove keybindings block from whichever file has it (Lua for Omarchy
+# "Quattro"/Hyprland 0.56+, classic .conf for older Omarchy versions).
+remove_marker_block() {
+  local file="$1" marker="$2"
+  if grep -q "$marker" "$file" 2>/dev/null; then
+    python3 - "$file" "$marker" << 'EOF'
 import sys
 
-path = sys.argv[1]
+path, marker = sys.argv[1], sys.argv[2]
 with open(path) as f:
     lines = f.readlines()
 
@@ -31,9 +33,9 @@ skip = False
 i = 0
 while i < len(lines):
     line = lines[i]
-    if "# Window Restore" in line:
+    if marker in line:
         skip = True
-    if skip and line.strip() == "" and i > 0 and "# Window Restore" not in lines[i-1]:
+    if skip and line.strip() == "" and i > 0 and marker not in lines[i-1]:
         skip = False
     if not skip:
         out.append(line)
@@ -42,9 +44,22 @@ while i < len(lines):
 with open(path, "w") as f:
     f.writelines(out)
 EOF
-  echo "  ✓ Keybindings removed from $BINDINGS_FILE"
+    echo "  ✓ Keybindings removed from $file"
+    return 0
+  fi
+  return 1
+}
+
+removed=0
+if remove_marker_block "$HOME/.config/hypr/bindings.lua" "-- Window Restore"; then
+  removed=1
+  echo "  ℹ  SUPER+W is restored to Omarchy's default binding"
+fi
+if remove_marker_block "$HOME/.config/hypr/bindings.conf" "# Window Restore"; then
+  removed=1
   echo "  ℹ  SUPER+W is restored to default (killactive) behavior"
 fi
+[ "$removed" = "1" ] || true
 
 # Remove pacman hook
 if [ -f "$HOOK_FILE" ]; then

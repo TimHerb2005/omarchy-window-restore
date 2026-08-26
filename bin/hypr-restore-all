@@ -53,7 +53,7 @@ def sync_hidden(hide_ws):
         ws_addrs = set()
     tracked = {h["address"] for h in hidden}
     for addr in ws_addrs - tracked:
-        subprocess.run(["hyprctl", "dispatch", "closewindow", f"address:{addr}"],
+        subprocess.run(["hyprctl", "dispatch", f"hl.dsp.window.close({{ window = 'address:{addr}' }})"],
                        capture_output=True)
     cleaned = [h for h in hidden if h["address"] in ws_addrs]
     if len(cleaned) != len(hidden):
@@ -72,7 +72,7 @@ def main():
         for entry in hidden:
             addr = entry.get("address", "")
             if addr:
-                subprocess.run(["hyprctl", "dispatch", "movetoworkspace", f"e+0,address:{addr}"])
+                subprocess.run(["hyprctl", "dispatch", f"hl.dsp.window.move({{ workspace = 'e+0', window = 'address:{addr}' }})"])
         save_json(HIDDEN_FILE, [])
         notify("50fa7b", f" {len(hidden)} window{'s' if len(hidden) != 1 else ''} restored")
     else:

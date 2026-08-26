@@ -87,7 +87,7 @@ def trim_hidden(n):
         for entry in to_kill:
             addr = entry.get("address", "")
             if addr:
-                subprocess.run(["hyprctl", "dispatch", "closewindow", f"address:{addr}"])
+                subprocess.run(["hyprctl", "dispatch", f"hl.dsp.window.close({{ window = 'address:{addr}' }})"])
         save_json(HIDDEN_FILE, hidden[:n])
 
 
@@ -98,7 +98,7 @@ def kill_all_hidden():
     for entry in hidden:
         addr = entry.get("address", "")
         if addr:
-            subprocess.run(["hyprctl", "dispatch", "closewindow", f"address:{addr}"])
+            subprocess.run(["hyprctl", "dispatch", f"hl.dsp.window.close({{ window = 'address:{addr}' }})"])
             killed += 1
     save_json(HIDDEN_FILE, [])
     return killed
@@ -242,8 +242,9 @@ def menu_ws(config):
             for entry in hidden:
                 addr = entry.get("address", "")
                 if addr:
-                    subprocess.run(["hyprctl", "dispatch", "movetoworkspacesilent",
-                                    f"{n},address:{addr}"], capture_output=True)
+                    subprocess.run(["hyprctl", "dispatch",
+                                    f"hl.dsp.window.move({{ workspace = '{n}', window = 'address:{addr}', follow = false }})"],
+                                    capture_output=True)
         notify("50fa7b", f"  Hide workspace: {n}")
     except ValueError:
         notify("ff5555", f"  Invalid: '{raw}' is not a number")

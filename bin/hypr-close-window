@@ -53,7 +53,7 @@ def sync_hidden(hide_ws):
     ws_addrs = get_hide_ws_addresses(hide_ws)
     tracked = {h["address"] for h in hidden}
     for addr in ws_addrs - tracked:
-        subprocess.run(["hyprctl", "dispatch", "closewindow", f"address:{addr}"],
+        subprocess.run(["hyprctl", "dispatch", f"hl.dsp.window.close({{ window = 'address:{addr}' }})"],
                        capture_output=True)
     cleaned = [h for h in hidden if h["address"] in ws_addrs]
     if len(cleaned) != len(hidden):
@@ -93,7 +93,7 @@ def mode_relaunch(window_class, pid, max_windows):
         h = load_json(HISTORY_FILE)
         h.insert(0, {"class": window_class, "args": args})
         save_json(HISTORY_FILE, h[:max_windows])
-    subprocess.run(["hyprctl", "dispatch", "killactive"])
+    subprocess.run(["hyprctl", "dispatch", "hl.dsp.window.close()"])
 
 
 def pause_media(window_class):
@@ -112,13 +112,13 @@ def mode_hide(address, window_class, max_windows, pause_on_close, hide_ws):
     hidden = sync_hidden(hide_ws)
     if len(hidden) >= max_windows:
         oldest = hidden.pop()
-        subprocess.run(["hyprctl", "dispatch", "closewindow", f"address:{oldest['address']}"],
+        subprocess.run(["hyprctl", "dispatch", f"hl.dsp.window.close({{ window = 'address:{oldest['address']}' }})"],
                        capture_output=True)
     hidden.insert(0, {"address": address, "class": window_class})
     save_json(HIDDEN_FILE, hidden)
     if pause_on_close:
         pause_media(window_class)
-    subprocess.run(["hyprctl", "dispatch", "movetoworkspacesilent", str(hide_ws)])
+    subprocess.run(["hyprctl", "dispatch", f"hl.dsp.window.move({{ workspace = '{hide_ws}', follow = false }})"])
 
 
 def main():
@@ -140,7 +140,7 @@ def main():
     if window_class in excluded:
         if pause_on_close:
             pause_media(window_class)
-        subprocess.run(["hyprctl", "dispatch", "killactive"])
+        subprocess.run(["hyprctl", "dispatch", "hl.dsp.window.close()"])
         return
 
     if get_mode() == "hide":

@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v1.12.0] – 2026-08-26
+
+### Fixed
+- **Broken on Omarchy "Quattro" (Hyprland 0.56+)**: Hyprland 0.56 moved `hyprctl dispatch` to a Lua-only calling convention — the classic `hyprctl dispatch closewindow address:...` / `killactive` / `movetoworkspace ...` / `movetoworkspacesilent ...` syntax now fails with `hl.dispatch: expected a dispatcher`. Every dispatch call in `hypr-close-window`, `hypr-restore-window`, `hypr-restore-all`, and `hypr-restore-settings` now uses the new `hl.dsp.window.close({ window = "address:..." })` / `hl.dsp.window.move({ workspace = ..., window = "address:...", follow = ... })` syntax. This is what broke SUPER+W, SUPER+ALT+W, and window restore entirely after updating to Quattro.
+- **Keybinding install on Quattro**: Omarchy "Quattro" also switched Hyprland's own config from `~/.config/hypr/bindings.conf` to native Lua (`~/.config/hypr/bindings.lua`), which Hyprland now loads instead of the `.conf` files once it exists. `omarchy-install-window-restore` / `omarchy-uninstall-window-restore` now detect which config style is active (presence of `~/.config/hypr/hyprland.lua`) and write/remove the keybinding block in the right file and syntax, instead of silently landing in a `.conf` file Hyprland no longer reads.
+
+### Requires
+- Hyprland 0.56+ (Omarchy "Quattro" or newer) for the dispatch fix above. Older Omarchy/Hyprland versions should stay on v1.11.0.
+
 ## [v1.11.0] – 2026-05-18
 
 ### Fixed

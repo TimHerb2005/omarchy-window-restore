@@ -52,7 +52,7 @@ def sync_hidden(hide_ws):
         ws_addrs = set()
     tracked = {h["address"] for h in hidden}
     for addr in ws_addrs - tracked:
-        subprocess.run(["hyprctl", "dispatch", "closewindow", f"address:{addr}"],
+        subprocess.run(["hyprctl", "dispatch", f"hl.dsp.window.close({{ window = 'address:{addr}' }})"],
                        capture_output=True)
     cleaned = [h for h in hidden if h["address"] in ws_addrs]
     if len(cleaned) != len(hidden):
@@ -95,7 +95,7 @@ def restore_hide():
     if not addr:
         notify("ff5555", " Restore error: address missing")
         return
-    subprocess.run(["hyprctl", "dispatch", "movetoworkspace", f"e+0,address:{addr}"])
+    subprocess.run(["hyprctl", "dispatch", f"hl.dsp.window.move({{ workspace = 'e+0', window = 'address:{addr}' }})"])
     notify("50fa7b", f" Restored: {entry.get('class', 'app')}")
 
 
