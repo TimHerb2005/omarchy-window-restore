@@ -148,7 +148,7 @@ Or via the **Omarchy Menu**: `Install → AUR` → type `omarchy-window-restore-
 
 Both options:
 - Copy scripts to `~/.local/bin/`
-- Add keybindings to `~/.config/hypr/bindings.conf`
+- Add keybindings to `~/.config/hypr/bindings.lua` (Omarchy "Quattro"/Hyprland 0.56+) or `bindings.conf` (older Omarchy), detected automatically
 - Hyprland reloads the config automatically — **no restart needed**
 
 ## Uninstall
