@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v1.13.0] – 2026-08-31
+
+### Fixed
+- **Git-clone install/uninstall on Quattro**: `install.sh` and `uninstall.sh` (the manual git-clone path) never got the Lua-detection fix from v1.12.0 — they still unconditionally wrote/removed the keybinding block in `~/.config/hypr/bindings.conf`, which Hyprland no longer reads once `hyprland.lua` exists. Only `omarchy-install-window-restore`/`omarchy-uninstall-window-restore` (the AUR path) had been updated. Both scripts now use the same Lua-detection and dual-file removal logic, so git-clone installs work on Quattro too.
+- **Wiki out of date**: Code-Documentation and Troubleshooting pages still described the old `hyprctl dispatch killactive`/`movetoworkspacesilent` calls and only referenced `bindings.conf`, both wrong since v1.12.0. Updated to reflect the `hl.dsp.window.*` dispatch syntax and the Lua/`.conf` split.
+
 ## [v1.12.0] – 2026-08-26
 
 ### Fixed
