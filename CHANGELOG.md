@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v1.14.0] – 2026-09-02
+
+### Fixed
+- **SUPER+D and SUPER+ALT+R broken on Omarchy "Quattro"**: Quattro replaced Walker with a native Quickshell menu and dropped `omarchy-launch-walker` entirely, so the settings menu (`hypr-restore-settings`) and picker menu (`hypr-restore-picker`) — both built on `omarchy-launch-walker --dmenu` — silently did nothing when the keybinding fired. `SUPER+W`/`SUPER+R`/`SUPER+SHIFT+R`/`SUPER+ALT+W` were unaffected since they don't open a menu. Both scripts now use Omarchy's own menu commands, `omarchy-menu-select` (for the settings/picker option lists) and `omarchy-menu-input` (for freeform text like max windows or hide workspace), which also drops the shell-pipe/`shlex.quote` workaround the old Walker integration needed.
+- **Bug report crashed with `NameError: name 'datetime' is not defined`**: `hypr-restore-settings` used `datetime.datetime.now()` in `menu_bugreport()` without importing the `datetime` module, so `SUPER+D` → 🐛 **Create bug report** always crashed instead of writing the report.
+- **Keybinding block silently duplicated on every re-install (Lua mode)**: the idempotency check `grep -q "$MARKER" ...` used the Lua marker `-- Window Restore`, which GNU grep parses as an (invalid) option because it starts with `--`, not as the search pattern. The check always failed, so `install.sh`, `omarchy-install-window-restore` (and the AUR update hook, which auto-runs it on every package upgrade) kept appending a fresh copy of the keybinding block to `bindings.lua` instead of skipping — and the matching `uninstall.sh`/`omarchy-uninstall-window-restore` check had the same bug, so uninstalling never actually removed the Lua block. All four now use `grep -q -- "$MARKER"`.
+
+### Changed
+- Dropped the `walker` dependency (PKGBUILD, `.SRCINFO`, README) — Omarchy's menu is now used directly and no longer requires a separate package.
+
+### Requires
+- Omarchy "Quattro" (or newer) for the menu fix above; the underlying commands (`omarchy-menu-select`, `omarchy-menu-input`) don't exist on pre-Quattro Omarchy, so this release targets Quattro only — stay on v1.13.0 on older Omarchy.
+
 ## [v1.13.0] – 2026-08-31
 
 ### Fixed
