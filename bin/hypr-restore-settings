@@ -1,8 +1,14 @@
 #!/usr/bin/env python3
 # hypr-restore-settings: SUPER+D
 # Omarchy menu to configure Window Restore settings.
+# Also used by the Window Restore Quickshell plugin: each `menu_*` function
+# below is a thin wrapper that asks the Omarchy menu for a value, then hands
+# it to an `apply_*` function that actually performs the change. The CLI
+# subcommands (see cli_main) call the same `apply_*` functions directly with
+# a value the plugin already collected in its own UI, so both front ends
+# share one source of truth for what a setting change does.
 
-import datetime, json, os, subprocess
+import datetime, json, os, subprocess, sys
 
 HISTORY_FILE = os.path.expanduser("~/.cache/hypr-window-history.json")
 HIDDEN_FILE  = os.path.expanduser("~/.cache/hypr-restore-hidden.json")
@@ -105,21 +111,38 @@ def kill_all_hidden():
     return killed
 
 
+def apply_mode(new_mode, current_mode):
+    if new_mode == current_mode:
+        return
+    if new_mode == "relaunch":
+        # Kill all hidden windows before switching — their state can't be used in relaunch mode
+        killed = kill_all_hidden()
+        set_mode("relaunch")
+        msg = f"󰑓  Mode: RELAUNCH  ({killed} hidden window{'s' if killed != 1 else ''} closed)" if killed else "󰑓  Mode: RELAUNCH"
+        notify("8be9fd", msg)
+    elif new_mode == "hide":
+        set_mode("hide")
+        notify("bd93f9", "󰈉  Mode: HIDE – state is preserved")
+
+
 def menu_mode(mode):
     new_mode = pick([
         "󰑓  Relaunch – app restarts fresh (default)" + ("  ✓" if mode == "relaunch" else ""),
         "󰈉  Hide – process stays alive, YouTube keeps playing" + ("  ✓" if mode == "hide" else ""),
     ], "Select mode")
     if not new_mode: return
-    if "Relaunch" in new_mode and mode != "relaunch":
-        # Kill all hidden windows before switching — their state can't be used in relaunch mode
-        killed = kill_all_hidden()
-        set_mode("relaunch")
-        msg = f"󰑓  Mode: RELAUNCH  ({killed} hidden window{'s' if killed != 1 else ''} closed)" if killed else "󰑓  Mode: RELAUNCH"
-        notify("8be9fd", msg)
-    elif "Hide" in new_mode and mode != "hide":
-        set_mode("hide")
-        notify("bd93f9", "󰈉  Mode: HIDE – state is preserved")
+    apply_mode("relaunch" if "Relaunch" in new_mode else "hide", mode)
+
+
+def apply_max(config, n):
+    if n < 1:
+        notify("ff5555", "  Invalid: value must be at least 1")
+        return
+    config["max_windows"] = n
+    save_config(config)
+    trim_history(n)
+    trim_hidden(n)
+    notify("50fa7b", f"  Max windows: {n}")
 
 
 def menu_max(config):
@@ -128,17 +151,30 @@ def menu_max(config):
     if not raw:
         return
     try:
-        n = int(raw)
-        if n < 1:
-            notify("ff5555", "  Invalid: value must be at least 1")
-            return
-        config["max_windows"] = n
-        save_config(config)
-        trim_history(n)
-        trim_hidden(n)
-        notify("50fa7b", f"  Max windows: {n}")
+        apply_max(config, int(raw))
     except ValueError:
         notify("ff5555", f"  Invalid: '{raw}' is not a number")
+
+
+def apply_add_exclusion(config, app_id):
+    excluded = config.get("excluded_classes", [])
+    if app_id in excluded:
+        notify("ff9900", f"  '{app_id}' is already excluded")
+        return
+    excluded.append(app_id)
+    config["excluded_classes"] = excluded
+    save_config(config)
+    notify("ffb86c", f"  Excluded: {app_id}")
+
+
+def apply_remove_exclusion(config, app_id):
+    excluded = config.get("excluded_classes", [])
+    if app_id not in excluded:
+        return
+    excluded.remove(app_id)
+    config["excluded_classes"] = excluded
+    save_config(config)
+    notify("50fa7b", f"  Re-included: {app_id}")
 
 
 def menu_exclusions(config):
@@ -153,14 +189,7 @@ def menu_exclusions(config):
 
     if "manually" in action:
         app_id = input_text("Enter app class  (e.g. Alacritty, code, spotify)")
-        if not app_id: return
-        if app_id in excluded:
-            notify("ff9900", f"  '{app_id}' is already excluded")
-            return
-        excluded.append(app_id)
-        config["excluded_classes"] = excluded
-        save_config(config)
-        notify("ffb86c", f"  Excluded: {app_id}")
+        if app_id: apply_add_exclusion(config, app_id)
 
     elif "open" in action:
         try:
@@ -176,22 +205,21 @@ def menu_exclusions(config):
             notify("ff9900", "  No new apps open")
             return
         selected = pick(classes, "Select app to exclude")
-        if not selected: return
-        excluded.append(selected)
-        config["excluded_classes"] = excluded
-        save_config(config)
-        notify("ffb86c", f"  Excluded: {selected}")
+        if selected: apply_add_exclusion(config, selected)
 
     elif "Remove" in action:
         if not excluded:
             notify("ff9900", "  Exclusion list is empty")
             return
         selected = pick(excluded, "Select entry to remove")
-        if not selected: return
-        excluded.remove(selected)
-        config["excluded_classes"] = excluded
-        save_config(config)
-        notify("50fa7b", f"  Re-included: {selected}")
+        if selected: apply_remove_exclusion(config, selected)
+
+
+def apply_notify(config, enabled):
+    config["notifications_enabled"] = enabled
+    save_config(config)
+    if enabled:
+        notify("50fa7b", "  Notifications: ON", config)
 
 
 def menu_notify(config):
@@ -201,11 +229,14 @@ def menu_notify(config):
         "󰂛  Off – suppress all notifications" + ("  ✓" if not enabled else ""),
     ], "Notifications")
     if not new_val: return
-    now_enabled = "On" in new_val
-    config["notifications_enabled"] = now_enabled
+    apply_notify(config, "On" in new_val)
+
+
+def apply_pause(config, enabled):
+    config["pause_on_close"] = enabled
     save_config(config)
-    if now_enabled:
-        notify("50fa7b", "  Notifications: ON", config)
+    icon = "" if enabled else "󰝟"
+    notify("50fa7b" if enabled else "ff9900", f"{icon}  Pause on close: {'ON' if enabled else 'OFF'}")
 
 
 def menu_pause(config):
@@ -215,11 +246,30 @@ def menu_pause(config):
         "  Off – never pause media automatically" + ("  ✓" if not pause else ""),
     ], "Pause media on close")
     if not new_val: return
-    enabled = "On" in new_val
-    config["pause_on_close"] = enabled
+    apply_pause(config, "On" in new_val)
+
+
+def apply_workspace(config, n):
+    ws = config.get("hide_workspace", 99)
+    if n < 1:
+        notify("ff5555", "  Invalid: workspace must be >= 1")
+        return
+    if n < 10:
+        notify("ff9900", f"  Warning: workspace {n} may conflict with your normal workspaces!")
+        return
+    old_ws = ws
+    config["hide_workspace"] = n
     save_config(config)
-    icon = "" if enabled else "󰝟"
-    notify("50fa7b" if enabled else "ff9900", f"{icon}  Pause on close: {'ON' if enabled else 'OFF'}")
+    # Migrate any currently hidden windows from old workspace to new one
+    hidden = load_json(HIDDEN_FILE)
+    if hidden and old_ws != n:
+        for entry in hidden:
+            addr = entry.get("address", "")
+            if addr:
+                subprocess.run(["hyprctl", "dispatch",
+                                f"hl.dsp.window.move({{ workspace = '{n}', window = 'address:{addr}', follow = false }})"],
+                                capture_output=True)
+    notify("50fa7b", f"  Hide workspace: {n}")
 
 
 def menu_ws(config):
@@ -227,26 +277,7 @@ def menu_ws(config):
     raw = input_text(f"Hide workspace number (current: {ws}, recommended: >= 50)")
     if not raw: return
     try:
-        n = int(raw)
-        if n < 1:
-            notify("ff5555", "  Invalid: workspace must be >= 1")
-            return
-        if n < 10:
-            notify("ff9900", f"  Warning: workspace {n} may conflict with your normal workspaces!")
-            return
-        old_ws = ws
-        config["hide_workspace"] = n
-        save_config(config)
-        # Migrate any currently hidden windows from old workspace to new one
-        hidden = load_json(HIDDEN_FILE)
-        if hidden and old_ws != n:
-            for entry in hidden:
-                addr = entry.get("address", "")
-                if addr:
-                    subprocess.run(["hyprctl", "dispatch",
-                                    f"hl.dsp.window.move({{ workspace = '{n}', window = 'address:{addr}', follow = false }})"],
-                                    capture_output=True)
-        notify("50fa7b", f"  Hide workspace: {n}")
+        apply_workspace(config, int(raw))
     except ValueError:
         notify("ff5555", f"  Invalid: '{raw}' is not a number")
 
@@ -410,5 +441,47 @@ def main():
             menu_bugreport(config)
 
 
+def cli_usage():
+    print(
+        "Usage: hypr-restore-settings [set-mode <relaunch|hide> | set-max <n> |\n"
+        "  add-exclusion <class> | remove-exclusion <class> | set-pause <on|off> |\n"
+        "  set-notify <on|off> | set-workspace <n> | bugreport]",
+        file=sys.stderr,
+    )
+    sys.exit(1)
+
+
+def cli_main(argv):
+    """Direct, non-interactive actions for front ends with their own UI
+    (currently the Window Restore Quickshell plugin)."""
+    config = get_config()
+    cmd, rest = argv[0], argv[1:]
+
+    try:
+        if cmd == "set-mode" and len(rest) == 1 and rest[0] in ("relaunch", "hide"):
+            apply_mode(rest[0], get_mode())
+        elif cmd == "set-max" and len(rest) == 1:
+            apply_max(config, int(rest[0]))
+        elif cmd == "add-exclusion" and len(rest) == 1:
+            apply_add_exclusion(config, rest[0])
+        elif cmd == "remove-exclusion" and len(rest) == 1:
+            apply_remove_exclusion(config, rest[0])
+        elif cmd == "set-pause" and len(rest) == 1 and rest[0] in ("on", "off"):
+            apply_pause(config, rest[0] == "on")
+        elif cmd == "set-notify" and len(rest) == 1 and rest[0] in ("on", "off"):
+            apply_notify(config, rest[0] == "on")
+        elif cmd == "set-workspace" and len(rest) == 1:
+            apply_workspace(config, int(rest[0]))
+        elif cmd == "bugreport" and len(rest) == 0:
+            menu_bugreport(config)
+        else:
+            cli_usage()
+    except ValueError:
+        cli_usage()
+
+
 if __name__ == "__main__":
-    main()
+    if len(sys.argv) > 1:
+        cli_main(sys.argv[1:])
+    else:
+        main()

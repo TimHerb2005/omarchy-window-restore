@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 # hypr-restore-picker: SUPER+ALT+R – Omarchy menu to pick window
+# Also used by the Window Restore Quickshell plugin: `--restore N` restores
+# the Nth entry of the current mode's list directly, without opening a menu
+# (the plugin renders its own list and reads history/hidden state itself).
 
-import json, os, subprocess
+import json, os, subprocess, sys
 
 HISTORY_FILE = os.path.expanduser("~/.cache/hypr-window-history.json")
 HIDDEN_FILE  = os.path.expanduser("~/.cache/hypr-restore-hidden.json")
@@ -54,10 +57,48 @@ def show_picker(entries, label_fn):
     except (ValueError, IndexError):
         return None
 
-def main():
-    cfg = get_config()
+def relaunch_label(e):
+    args = e.get("args", [])
+    app_url = next((a for a in args if a.startswith("--app=")), None)
+    if app_url:
+        return app_url.removeprefix("--app=https://").split("/")[0]
+    return e.get("class", "?")
 
-    if get_mode() == "hide":
+
+def restore_hidden(idx):
+    hidden = load_json(HIDDEN_FILE)
+    if idx < 0 or idx >= len(hidden):
+        return
+    entry = hidden.pop(idx)
+    save_json(HIDDEN_FILE, hidden)
+    addr = entry.get("address", "")
+    if addr:
+        subprocess.run(["hyprctl", "dispatch", f"hl.dsp.window.move({{ workspace = 'e+0', window = 'address:{addr}' }})"])
+        notify("50fa7b", f" Restored: {entry.get('class', 'app')}")
+
+
+def restore_history(idx):
+    history = load_json(HISTORY_FILE)
+    if idx < 0 or idx >= len(history):
+        return
+    entry = history.pop(idx)
+    save_json(HISTORY_FILE, history)
+    args = entry.get("args", [])
+    if args:
+        launch(args)
+        notify("50fa7b", f" Restored: {entry.get('class', 'app')}")
+
+
+def main():
+    get_config()
+    mode = get_mode()
+
+    if len(sys.argv) > 2 and sys.argv[1] == "--restore":
+        idx = int(sys.argv[2])
+        restore_hidden(idx) if mode == "hide" else restore_history(idx)
+        return
+
+    if mode == "hide":
         hidden = load_json(HIDDEN_FILE)
         if not hidden:
             notify("ff9900", " No hidden windows")
@@ -65,32 +106,16 @@ def main():
         idx = show_picker(hidden, lambda e: e.get("class", "?"))
         if idx is None:
             return
-        entry = hidden.pop(idx)
-        save_json(HIDDEN_FILE, hidden)
-        addr = entry.get("address", "")
-        if addr:
-            subprocess.run(["hyprctl", "dispatch", f"hl.dsp.window.move({{ workspace = 'e+0', window = 'address:{addr}' }})"])
-            notify("50fa7b", f" Restored: {entry.get('class', 'app')}")
+        restore_hidden(idx)
     else:
         history = load_json(HISTORY_FILE)
         if not history:
             notify("ff9900", " No windows in history")
             return
-        def relaunch_label(e):
-            args = e.get("args", [])
-            app_url = next((a for a in args if a.startswith("--app=")), None)
-            if app_url:
-                return app_url.removeprefix("--app=https://").split("/")[0]
-            return e.get("class", "?")
         idx = show_picker(history, relaunch_label)
         if idx is None:
             return
-        entry = history.pop(idx)
-        save_json(HISTORY_FILE, history)
-        args = entry.get("args", [])
-        if args:
-            launch(args)
-            notify("50fa7b", f" Restored: {entry.get('class', 'app')}")
+        restore_history(idx)
 
 
 if __name__ == "__main__":
