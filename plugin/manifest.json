@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "id": "io.github.timherb2005.window-restore",
+  "name": "Window Restore",
+  "version": "1.0.0",
+  "author": "TimHerb2005",
+  "license": "LicenseRef-PolyForm-Noncommercial-1.0.0",
+  "description": "Native settings and picker menus for Window Restore",
+  "kinds": [
+    "overlay"
+  ],
+  "keepLoaded": true,
+  "entryPoints": {
+    "overlay": "WindowRestore.qml"
+  }
+}

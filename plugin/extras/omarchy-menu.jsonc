@@ -1,0 +1,9 @@
+{
+  // Adds Window Restore -> Settings / Picker to the Omarchy menu.
+  // Merged into ~/.config/omarchy/extensions/omarchy-menu.jsonc by
+  // plugin/extras/install.sh — the two "window-restore.*" lines below are
+  // copied verbatim; this file's own braces are not.
+  "window-restore": {"icon":"","label":"Window Restore"},
+  "window-restore.settings": {"icon":"","label":"Settings","aliases":["window-restore-settings"],"description":"Mode, max windows, exclusions, pause, notifications, workspace, bug report","action":"omarchy-shell shell summon io.github.timherb2005.window-restore '{\"view\":\"settings\"}'"},
+  "window-restore.picker": {"icon":"","label":"Restore window…","aliases":["window-restore-picker"],"description":"Pick a closed or hidden window to restore","action":"omarchy-shell shell summon io.github.timherb2005.window-restore '{\"view\":\"picker\"}'"}
+}
