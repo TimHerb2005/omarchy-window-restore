@@ -151,6 +151,16 @@ Both options:
 - Add keybindings to `~/.config/hypr/bindings.lua` (Omarchy "Quattro"/Hyprland 0.56+) or `bindings.conf` (older Omarchy), detected automatically
 - Hyprland reloads the config automatically — **no restart needed**
 
+### Optional: native Quickshell plugin (Omarchy "Quattro" only)
+
+On Quattro, `SUPER+D`/`SUPER+ALT+R` can open native Quickshell overlays instead of the `omarchy-menu-select`/`omarchy-menu-input` menus above — same functionality, themed like the rest of the system, plus a "Window Restore" entry in the Omarchy menu. Install the base tool first (either option above), then:
+
+```bash
+bash plugin/extras/install.sh
+```
+
+See [`plugin/README.md`](plugin/README.md) for details and how to uninstall it.
+
 ## Uninstall
 
 ```bash

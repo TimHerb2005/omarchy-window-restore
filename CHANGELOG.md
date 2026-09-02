@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v1.15.0] – 2026-09-02
+
+### Added
+- **Native Quickshell plugin (Omarchy "Quattro")**: `plugin/` is an optional Quickshell shell plugin (`plugin/extras/install.sh`) that replaces the `omarchy-menu-select`/`omarchy-menu-input`-driven settings and picker menus with first-class overlays matching the system theme, and adds a "Window Restore" entry to the Omarchy menu. All state and mutations still go through `hypr-restore-settings`/`hypr-restore-picker` — the plugin only renders the menu and calls into them, so it can't drift from the CLI-only install. See `plugin/README.md`.
+- `hypr-restore-settings` gained direct, non-interactive subcommands (`set-mode`, `set-max`, `add-exclusion`, `remove-exclusion`, `set-pause`, `set-notify`, `set-workspace`, `bugreport`) and `hypr-restore-picker` gained `--restore <index>`, both for the plugin to call — the plain interactive CLI (no arguments) is unchanged.
+
 ## [v1.14.0] – 2026-09-02
 
 ### Fixed
