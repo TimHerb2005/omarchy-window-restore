@@ -116,7 +116,7 @@ For Chromium-based apps, the window **class** is used to identify the correct la
 
 - [Omarchy](https://omarchy.org/) (Hyprland-based)
 - Python 3.10+
-- `walker` (included with Omarchy, used for picker and settings menus)
+- Omarchy's built-in menu (`omarchy-menu-select`/`omarchy-menu-input`, included with every Omarchy install, used for the picker and settings menus)
 
 ## Install
 

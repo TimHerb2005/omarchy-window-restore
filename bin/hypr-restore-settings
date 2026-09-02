@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-# hypr-restore-settings: SUPER+CTRL+R
-# Walker menu to configure Window Restore settings.
+# hypr-restore-settings: SUPER+D
+# Omarchy menu to configure Window Restore settings.
 
-import json, os, subprocess
+import datetime, json, os, subprocess
 
 HISTORY_FILE = os.path.expanduser("~/.cache/hypr-window-history.json")
 HIDDEN_FILE  = os.path.expanduser("~/.cache/hypr-restore-hidden.json")
@@ -43,21 +43,22 @@ def save_config(cfg):
 
 
 def pick(items, placeholder):
-    """Show a walker dmenu with predefined options."""
-    import shlex
-    items_str = shlex.quote("\n".join(items))
-    ph_str = shlex.quote(placeholder + "…")
-    cmd = f"printf %b {items_str} | omarchy-launch-walker --dmenu --width 295 --minheight 1 --maxheight 300 -p {ph_str} 2>/dev/null"
-    result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+    """Show the Omarchy menu with predefined options."""
+    result = subprocess.run(
+        ["omarchy-menu-select", placeholder + "…", *items],
+        capture_output=True, text=True)
+    if result.returncode != 0:
+        return ""
     return result.stdout.strip()
 
 
 def input_text(placeholder):
-    """Show a walker freeform text input."""
-    import shlex
-    ph_str = shlex.quote(placeholder + "…")
-    cmd = f"omarchy-launch-walker --dmenu --inputonly --width 295 --minheight 1 --maxheight 1 -p {ph_str} 2>/dev/null"
-    result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+    """Show the Omarchy menu's freeform text input."""
+    result = subprocess.run(
+        ["omarchy-menu-input", placeholder + "…"],
+        capture_output=True, text=True)
+    if result.returncode != 0:
+        return ""
     return result.stdout.strip()
 
 

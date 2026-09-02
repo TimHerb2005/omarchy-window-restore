@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# hypr-restore-picker: SUPER+ALT+R – walker menu to pick window
+# hypr-restore-picker: SUPER+ALT+R – Omarchy menu to pick window
 
 import json, os, subprocess
 
@@ -43,11 +43,10 @@ def launch(args):
 
 def show_picker(entries, label_fn):
     labels = [f"{i+1}. {label_fn(e)}" for i, e in enumerate(entries)]
-    import shlex
-    items_str = shlex.quote("\n".join(labels))
-    cmd = f"printf %b {items_str} | omarchy-launch-walker --dmenu --width 295 --minheight 1 --maxheight 630 -p 'Restore window…' 2>/dev/null"
-    result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
-    selected = result.stdout.strip()
+    result = subprocess.run(
+        ["omarchy-menu-select", "Restore window…", *labels],
+        capture_output=True, text=True)
+    selected = result.stdout.strip() if result.returncode == 0 else ""
     if not selected:
         return None
     try:
