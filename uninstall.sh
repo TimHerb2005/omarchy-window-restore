@@ -17,7 +17,7 @@ echo "  ✓ Scripts removed"
 # "Quattro"/Hyprland 0.56+, classic .conf for older Omarchy versions).
 remove_marker_block() {
   local file="$1" marker="$2"
-  if grep -q "$marker" "$file" 2>/dev/null; then
+  if grep -q -- "$marker" "$file" 2>/dev/null; then
     python3 - "$file" "$marker" << 'EOF'
 import sys
 

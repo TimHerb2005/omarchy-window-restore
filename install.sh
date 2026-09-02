@@ -33,7 +33,7 @@ done
 echo "  ✓ Scripts installed to $BIN_DIR"
 
 # Add keybindings (idempotent – skip if already present)
-if grep -q "$MARKER" "$BINDINGS_FILE" 2>/dev/null; then
+if grep -q -- "$MARKER" "$BINDINGS_FILE" 2>/dev/null; then
   echo "  ✓ Keybindings already present, skipping"
 elif [ "$LUA_MODE" = "1" ]; then
   cat >> "$BINDINGS_FILE" << 'BINDINGS'
