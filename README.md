@@ -120,7 +120,11 @@ For Chromium-based apps, the window **class** is used to identify the correct la
 
 ## Install
 
-### Option 1: Git clone (manual)
+Step 1 is the same on every Omarchy version — it detects your Hyprland/config style automatically. Step 2 depends on whether you're on Quattro.
+
+### Step 1: Base tool (Quattro and older Omarchy)
+
+**Option 1: Git clone (manual)**
 
 ```bash
 git clone https://github.com/TimHerb2005/omarchy-window-restore.git
@@ -128,7 +132,7 @@ cd omarchy-window-restore
 bash install.sh
 ```
 
-### Option 2: AUR package
+**Option 2: AUR package**
 
 Install via any AUR helper:
 
@@ -151,15 +155,19 @@ Both options:
 - Add keybindings to `~/.config/hypr/bindings.lua` (Omarchy "Quattro"/Hyprland 0.56+) or `bindings.conf` (older Omarchy), detected automatically
 - Hyprland reloads the config automatically — **no restart needed**
 
-### Optional: native Quickshell plugin (Omarchy "Quattro" only)
+At this point `SUPER+W`/`SUPER+R`/etc. all work, and `SUPER+D`/`SUPER+ALT+R` open the settings/picker menus via Omarchy's built-in `omarchy-menu-select`/`omarchy-menu-input` — on both Quattro and older Omarchy.
 
-On Quattro, `SUPER+D`/`SUPER+ALT+R` can open native Quickshell overlays instead of the `omarchy-menu-select`/`omarchy-menu-input` menus above — same functionality, themed like the rest of the system, plus a "Window Restore" entry in the Omarchy menu. Install the base tool first (either option above), then:
+### Step 2: Only if you're on Omarchy "Quattro"
+
+**On older Omarchy:** nothing else to do — Step 1 is the full install.
+
+**On Quattro (Hyprland 0.56+):** Step 1 already works fully, but you can *optionally* add the native Quickshell plugin so `SUPER+D`/`SUPER+ALT+R` open themed overlays (matching the rest of the system) instead of the `omarchy-menu-select`/`omarchy-menu-input` popups, plus a "Window Restore" entry in the Omarchy menu:
 
 ```bash
 bash plugin/extras/install.sh
 ```
 
-See [`plugin/README.md`](plugin/README.md) for details and how to uninstall it.
+There is no equivalent for older Omarchy — it needs Quattro's Quickshell plugin system. See [`plugin/README.md`](plugin/README.md) for details and how to uninstall it.
 
 ## Uninstall
 
